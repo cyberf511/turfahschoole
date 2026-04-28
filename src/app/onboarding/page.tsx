@@ -125,6 +125,7 @@ export default function OnboardingPage() {
               dir="ltr"
               style={{ textAlign: 'right' }}
             />
+            <span className="form-hint">🔒 يتم تشفير رقم الهاتف بالكامل ولا يظهر إلا آخر 4 أرقام</span>
           </div>
 
           {error && <div className="form-error" style={{ padding: '10px', background: 'var(--danger-soft)', borderRadius: 'var(--radius-md)' }}>{error}</div>}
