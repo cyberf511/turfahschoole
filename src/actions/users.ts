@@ -83,6 +83,15 @@ export async function updateUserRole(
     .update({ role: newRole, updated_at: new Date().toISOString() })
     .eq('id', targetUserId);
 
+  if (!error) {
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: 'UPDATE_ROLE',
+      description: `تم تغيير دور المستخدم إلى ${newRole}`,
+      target_id: targetUserId
+    });
+  }
+
   if (error) return { success: false, error: 'فشل في تحديث الدور' };
   return { success: true };
 }
@@ -151,6 +160,13 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
       console.error('Error deleting from supabase:', error);
       // Even if supabase fails, Clerk deleted them so they can't login anyway
     }
+
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: 'DELETE_USER',
+      description: 'تم حذف حساب مستخدم',
+      target_id: targetUserId
+    });
 
     return { success: true };
   } catch (err: any) {

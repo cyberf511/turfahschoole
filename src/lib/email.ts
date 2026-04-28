@@ -39,7 +39,7 @@ export function emailApproved(studentName: string, oppTitle: string) {
         </div>
         <p style="color:#374151;">مرحباً <strong>${studentName}</strong>،</p>
         <p style="color:#374151;">يسعدنا إبلاغك بأن طلبك للمشاركة في فرصة <strong>"${oppTitle}"</strong> قد تم قبوله.</p>
-        <p style="color:#6b7280;font-size:0.9rem;">يرجى متابعة التعليمات عبر المنصة والتواصل مع المنسقةةة للتفاصيل.</p>
+        <p style="color:#6b7280;font-size:0.9rem;">يرجى متابعة التعليمات عبر المنصة والتواصل مع المنسقة للتفاصيل.</p>
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
         <p style="color:#9ca3af;font-size:0.8rem;text-align:center;">منصة التطوع — ثانوية طرفة بنت عبدالعزيز</p>
       </div>

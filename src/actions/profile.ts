@@ -3,6 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { encrypt, getLastThreeDigits } from '@/lib/encryption';
+import { ProfileSchema, ProfileUpdateSchema } from '@/lib/validations';
 import type { ActionResponse, ProfileFormData, Profile } from '@/types';
 
 export async function getProfile(): Promise<ActionResponse<Profile>> {
@@ -51,17 +52,21 @@ export async function completeProfile(formData: ProfileFormData): Promise<Action
 
   const supabase = await createServerSupabase();
 
-  const encryptedNationalId = encrypt(formData.national_id);
-  const last3 = getLastThreeDigits(formData.national_id);
+  const validated = ProfileSchema.safeParse(formData);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+  const validData = validated.data;
+
+  const encryptedNationalId = encrypt(validData.national_id);
+  const last3 = getLastThreeDigits(validData.national_id);
 
   const { error } = await supabase
     .from('profiles')
     .update({
-      full_name: formData.full_name,
+      full_name: validData.full_name,
       national_id_encrypted: encryptedNationalId,
       national_id_last3: last3,
-      education_level: formData.education_level,
-      phone: formData.phone,
+      education_level: validData.education_level,
+      phone: validData.phone,
       profile_completed: true,
       updated_at: new Date().toISOString(),
     })
@@ -78,12 +83,16 @@ export async function updateProfile(data: Partial<ProfileFormData>): Promise<Act
   const supabase = await createServerSupabase();
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-  if (data.full_name) updateData.full_name = data.full_name;
-  if (data.phone) updateData.phone = data.phone;
-  if (data.education_level) updateData.education_level = data.education_level;
-  if (data.national_id) {
-    updateData.national_id_encrypted = encrypt(data.national_id);
-    updateData.national_id_last3 = getLastThreeDigits(data.national_id);
+  const validated = ProfileUpdateSchema.safeParse(data);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+  const validData = validated.data;
+
+  if (validData.full_name) updateData.full_name = validData.full_name;
+  if (validData.phone) updateData.phone = validData.phone;
+  if (validData.education_level) updateData.education_level = validData.education_level;
+  if (validData.national_id) {
+    updateData.national_id_encrypted = encrypt(validData.national_id);
+    updateData.national_id_last3 = getLastThreeDigits(validData.national_id);
   }
 
   const { error } = await supabase.from('profiles').update(updateData).eq('id', user.id);

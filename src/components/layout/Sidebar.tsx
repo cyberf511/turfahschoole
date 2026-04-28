@@ -48,7 +48,7 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
   const pathname = usePathname();
   const role = profile?.role || 'student';
   const navItems = role === 'coordinator' || role === 'super_admin' ? coordinatorNav : studentNav;
-  const sectionLabel = role === 'coordinator' || role === 'super_admin' ? 'المنسقةةة' : 'الطالبات';
+  const sectionLabel = role === 'coordinator' || role === 'super_admin' ? 'المنسقة' : 'الطالبات';
   const roleLabel = role === 'coordinator' ? 'منسقة' : role === 'super_admin' ? 'مشرفة عامة' : 'طالبة';
 
   return (

@@ -19,7 +19,8 @@
     "resend": "^6.12.2",
     "svix": "^1.92.2",
     "swr": "^2.4.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",

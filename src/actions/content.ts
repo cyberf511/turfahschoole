@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { ContentSchema, ContentUpdateSchema } from '@/lib/validations';
 import type { ActionResponse } from '@/types';
 
 export interface SiteContent {
@@ -73,14 +74,18 @@ export async function createContent(input: {
     return { success: false, error: 'غير مصرح' };
   }
 
+  const validated = ContentSchema.safeParse(input);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+  const validData = validated.data;
+
   const { error } = await supabase.from('site_content').insert({
-    type: input.type,
-    title: input.title || null,
-    description: input.description || null,
-    image_url: input.image_url || null,
-    stat_value: input.stat_value || null,
-    stat_label: input.stat_label || null,
-    sort_order: input.sort_order || 0,
+    type: validData.type,
+    title: validData.title || null,
+    description: validData.description || null,
+    image_url: validData.image_url || null,
+    stat_value: validData.stat_value || null,
+    stat_label: validData.stat_label || null,
+    sort_order: validData.sort_order || 0,
     created_by: user.id,
   });
 
@@ -106,9 +111,12 @@ export async function updateContent(id: string, input: {
     return { success: false, error: 'غير مصرح' };
   }
 
+  const validated = ContentUpdateSchema.safeParse(input);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+
   const { error } = await supabase
     .from('site_content')
-    .update({ ...input, updated_at: new Date().toISOString() })
+    .update({ ...validated.data, updated_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) return { success: false, error: 'فشل في تحديث المحتوى' };

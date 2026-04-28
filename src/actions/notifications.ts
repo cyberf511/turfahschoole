@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { NotificationSchema } from '@/lib/validations';
 import type { ActionResponse, Notification, NotificationType } from '@/types';
 
 interface CreateNotificationInput {
@@ -13,13 +14,17 @@ interface CreateNotificationInput {
 }
 
 export async function createNotification(input: CreateNotificationInput): Promise<ActionResponse> {
+  const validated = NotificationSchema.safeParse(input);
+  if (!validated.success) return { success: false, error: 'بيانات غير صالحة' };
+  const validData = validated.data;
+
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('notifications').insert({
-    user_id: input.userId,
-    title: input.title,
-    message: input.message,
-    type: input.type,
-    related_application_id: input.relatedApplicationId || null,
+    user_id: validData.userId,
+    title: validData.title,
+    message: validData.message,
+    type: validData.type,
+    related_application_id: validData.relatedApplicationId || null,
   });
 
   if (error) {

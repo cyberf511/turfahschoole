@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { OpportunitySchema, OpportunityUpdateSchema } from '@/lib/validations';
 import type { ActionResponse, PaginatedResponse, Opportunity, OpportunityFormData } from '@/types';
 
 export async function getOpportunities(
@@ -83,16 +84,20 @@ export async function createOpportunity(formData: OpportunityFormData): Promise<
     return { success: false, error: 'غير مصرح لك بإنشاء فرص' };
   }
 
+  const validated = OpportunitySchema.safeParse(formData);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+  const validData = validated.data;
+
   const { error } = await supabase.from('opportunities').insert({
     created_by: user.id,
-    title: formData.title,
-    description: formData.description,
-    location: formData.location,
-    hours: formData.hours,
-    requirements: formData.requirements || null,
-    max_participants: formData.max_participants || null,
-    start_date: formData.start_date || null,
-    end_date: formData.end_date || null,
+    title: validData.title,
+    description: validData.description,
+    location: validData.location,
+    hours: validData.hours,
+    requirements: validData.requirements || null,
+    max_participants: validData.max_participants || null,
+    start_date: validData.start_date || null,
+    end_date: validData.end_date || null,
   });
 
   if (error) return { success: false, error: 'فشل في إنشاء الفرصة' };
@@ -109,8 +114,11 @@ export async function updateOpportunity(id: string, formData: Partial<Opportunit
     return { success: false, error: 'غير مصرح' };
   }
 
+  const validated = OpportunityUpdateSchema.safeParse(formData);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
+
   const { error } = await supabase.from('opportunities').update({
-    ...formData,
+    ...validated.data,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
 
@@ -124,6 +132,16 @@ export async function toggleOpportunity(id: string, isActive: boolean): Promise<
 
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('opportunities').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('id', id);
+  
+  if (!error) {
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: isActive ? 'ACTIVATE_OPPORTUNITY' : 'DEACTIVATE_OPPORTUNITY',
+      description: `تم ${isActive ? 'تفعيل' : 'إيقاف'} فرصة`,
+      target_id: id
+    });
+  }
+  
   if (error) return { success: false, error: 'فشل في تحديث الحالة' };
   return { success: true };
 }
@@ -149,6 +167,16 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
   }
 
   const { error } = await supabase.from('opportunities').delete().eq('id', id);
+  
+  if (!error) {
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: 'DELETE_OPPORTUNITY',
+      description: 'تم حذف فرصة',
+      target_id: id
+    });
+  }
+
   if (error) return { success: false, error: 'فشل في حذف الفرصة' };
   return { success: true };
 }
