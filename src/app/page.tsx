@@ -1,66 +1,84 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+  if (userId) redirect('/dashboard');
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="landing">
+      <div className="landing-hero">
+        <div className="landing-hero__content animate-slide-up">
+          <div className="landing-hero__badge">🎓 منصة التطوع الطلابي</div>
+          <h1 className="landing-hero__title">
+            ابدأ رحلتك في <span>العمل التطوعي</span>
+          </h1>
+          <p className="landing-hero__desc">
+            منصة احترافية متكاملة لإدارة برامج التطوع الطلابي. تقدّم لفرص التطوع، تتبع ساعاتك، واحصل على شهاداتك الموثقة — كل ذلك في مكان واحد.
           </p>
+          <div className="landing-hero__actions">
+            <Link href="/sign-in" className="btn btn--primary btn--lg">
+              تسجيل الدخول
+            </Link>
+            <Link href="/sign-up" className="btn btn--secondary btn--lg">
+              إنشاء حساب جديد
+            </Link>
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      <section className="landing-features animate-fade-in">
+        <h2 className="landing-features__title">مميزات المنصة</h2>
+        <div className="landing-features__grid stagger-children">
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">🔍</div>
+            <h3 className="landing-feature__title">استكشف الفرص</h3>
+            <p className="landing-feature__desc">
+              تصفح مجموعة متنوعة من فرص التطوع المتاحة وقدّم طلبك بسهولة
+            </p>
+          </div>
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">📊</div>
+            <h3 className="landing-feature__title">تتبع تقدمك</h3>
+            <p className="landing-feature__desc">
+              راقب ساعات التطوع المكتملة وتقدمك عبر لوحة معلومات تفاعلية
+            </p>
+          </div>
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">🏆</div>
+            <h3 className="landing-feature__title">شهادات موثقة</h3>
+            <p className="landing-feature__desc">
+              ارفع شهاداتك واحصل على التوثيق الرسمي من منسقي التطوع
+            </p>
+          </div>
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">🔔</div>
+            <h3 className="landing-feature__title">إشعارات فورية</h3>
+            <p className="landing-feature__desc">
+              تابع حالة طلباتك وشهاداتك من خلال نظام إشعارات ذكي
+            </p>
+          </div>
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">🔒</div>
+            <h3 className="landing-feature__title">أمان متقدم</h3>
+            <p className="landing-feature__desc">
+              بياناتك محمية بأعلى معايير التشفير والخصوصية
+            </p>
+          </div>
+          <div className="landing-feature hover-lift animate-slide-up">
+            <div className="landing-feature__icon">📱</div>
+            <h3 className="landing-feature__title">متجاوب بالكامل</h3>
+            <p className="landing-feature__desc">
+              تجربة سلسة على جميع الأجهزة: الجوال، الآيباد، واللابتوب
+            </p>
+          </div>
         </div>
-      </main>
+      </section>
+
+      <footer className="landing-footer">
+        <p>© {new Date().getFullYear()} منصة التطوع الطلابي — جميع الحقوق محفوظة</p>
+      </footer>
     </div>
   );
 }
