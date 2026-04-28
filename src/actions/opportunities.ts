@@ -130,8 +130,15 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
     return { success: false, error: 'غير مصرح' };
   }
 
-  // Delete related applications first
-  await supabase.from('applications').delete().eq('opportunity_id', id);
+  // Find related applications first
+  const { data: apps } = await supabase.from('applications').select('id').eq('opportunity_id', id);
+  if (apps && apps.length > 0) {
+    const appIds = apps.map((a: any) => a.id);
+    // Delete notifications related to these applications
+    await supabase.from('notifications').delete().in('related_application_id', appIds);
+    // Delete applications
+    await supabase.from('applications').delete().in('id', appIds);
+  }
 
   const { error } = await supabase.from('opportunities').delete().eq('id', id);
   if (error) return { success: false, error: 'فشل في حذف الفرصة' };

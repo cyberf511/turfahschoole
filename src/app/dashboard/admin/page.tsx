@@ -118,7 +118,7 @@ export default function AdminPage() {
           </p>
         </div>
         <button className="btn btn--secondary" onClick={handleExport} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <Icons.download /> تصدير CSV
+          <Icons.download /> تصدير اكسل
         </button>
       </div>
 

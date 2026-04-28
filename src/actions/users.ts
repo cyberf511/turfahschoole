@@ -101,15 +101,29 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
 
     // 2. Delete relations from Supabase to prevent FK constraint failures
     await supabase.from('notifications').delete().eq('user_id', targetUserId);
-    await supabase.from('applications').delete().eq('student_id', targetUserId);
     
     // Set reviewed_by to null instead of deleting the application
     await supabase.from('applications').update({ verified_by: null }).eq('verified_by', targetUserId);
+
+    // Get all applications this user applied to
+    const { data: studentApps } = await supabase.from('applications').select('id').eq('student_id', targetUserId);
+    if (studentApps && studentApps.length > 0) {
+      const studentAppIds = studentApps.map(a => a.id);
+      await supabase.from('notifications').delete().in('related_application_id', studentAppIds);
+      await supabase.from('applications').delete().in('id', studentAppIds);
+    }
 
     // Cascade delete applications from opportunities this user created
     const { data: opps } = await supabase.from('opportunities').select('id').eq('created_by', targetUserId);
     if (opps && opps.length > 0) {
       const oppIds = opps.map(o => o.id);
+      
+      const { data: oppApps } = await supabase.from('applications').select('id').in('opportunity_id', oppIds);
+      if (oppApps && oppApps.length > 0) {
+        const oppAppIds = oppApps.map(a => a.id);
+        await supabase.from('notifications').delete().in('related_application_id', oppAppIds);
+      }
+      
       await supabase.from('applications').delete().in('opportunity_id', oppIds);
     }
 
