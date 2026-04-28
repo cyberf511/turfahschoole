@@ -95,12 +95,19 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
 
   try {
     // 1. Delete from Clerk
-    const { clerkClient } = await import('@clerk/nextjs/server');
-    const client = await clerkClient();
-    await client.users.deleteUser(targetUserId);
+    try {
+      const { clerkClient } = await import('@clerk/nextjs/server');
+      const client = await clerkClient();
+      await client.users.deleteUser(targetUserId);
+    } catch (clerkErr) {
+      console.warn('User might already be deleted from Clerk, proceeding with Supabase cleanup...', clerkErr);
+    }
 
     // 2. Delete relations from Supabase to prevent FK constraint failures
     await supabase.from('notifications').delete().eq('user_id', targetUserId);
+    
+    // Clear created_by in site_content to prevent FK constraint
+    await supabase.from('site_content').update({ created_by: null }).eq('created_by', targetUserId);
     
     // Set reviewed_by to null instead of deleting the application
     await supabase.from('applications').update({ verified_by: null }).eq('verified_by', targetUserId);

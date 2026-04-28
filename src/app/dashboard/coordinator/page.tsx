@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loading } from '@/components/ui/Loading';
-import { getAllApplications } from '@/actions/applications';
-import { getCertificatesForReview } from '@/actions/certificates';
-import { getOpportunities } from '@/actions/opportunities';
+import { getCoordinatorStats } from '@/actions/stats';
 import Link from 'next/link';
 import { Plus, FileText, Clock, Award, ClipboardList } from 'lucide-react';
 
@@ -13,18 +11,10 @@ export default function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getOpportunities(false),
-      getAllApplications('pending'),
-      getCertificatesForReview(),
-      getAllApplications(),
-    ]).then(([oppsRes, pendingRes, certsRes, allAppsRes]) => {
-      setStats({
-        opportunities: oppsRes.data?.length || 0,
-        pendingApps: pendingRes.data?.length || 0,
-        pendingCerts: certsRes.data?.length || 0,
-        totalApps: allAppsRes.data?.length || 0,
-      });
+    getCoordinatorStats().then((res) => {
+      if (res.success && res.data) {
+        setStats(res.data);
+      }
       setLoading(false);
     });
   }, []);
