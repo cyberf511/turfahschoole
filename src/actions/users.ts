@@ -2,9 +2,12 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import type { ActionResponse, Profile } from '@/types';
+import type { ActionResponse, Profile, PaginatedResponse } from '@/types';
 
-export async function getAllUsers(): Promise<ActionResponse<Profile[]>> {
+export async function getAllUsers(
+  page = 1,
+  limit = 10
+): Promise<PaginatedResponse<Profile[]> & { stats?: any }> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
@@ -14,13 +17,38 @@ export async function getAllUsers(): Promise<ActionResponse<Profile[]>> {
     return { success: false, error: 'غير مصرح' };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('*', { count: 'exact' });
+
+  // Pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.order('created_at', { ascending: false }).range(from, to);
+
+  const { data, count, error } = await query;
+  
+  // Stats
+  const { data: allData, error: statsError } = await supabase.from('profiles').select('role');
+  let stats = null;
+  if (!statsError && allData) {
+    stats = {
+      total: allData.length,
+      students: allData.filter(u => u.role === 'student').length,
+      coordinators: allData.filter(u => u.role === 'coordinator').length,
+      admins: allData.filter(u => u.role === 'super_admin').length
+    };
+  }
 
   if (error) return { success: false, error: 'فشل في تحميل المستخدمين' };
-  return { success: true, data: data || [] };
+  return { 
+    success: true, 
+    data: data || [],
+    totalCount: count || 0,
+    totalPages: count ? Math.ceil(count / limit) : 0,
+    currentPage: page,
+    stats
+  };
 }
 
 export async function updateUserRole(
@@ -71,7 +99,13 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
     const client = await clerkClient();
     await client.users.deleteUser(targetUserId);
 
-    // 2. Delete from Supabase
+    // 2. Delete relations from Supabase to prevent FK constraint failures
+    await supabase.from('notifications').delete().eq('user_id', targetUserId);
+    await supabase.from('applications').delete().eq('student_id', targetUserId);
+    await supabase.from('applications').delete().eq('reviewed_by', targetUserId);
+    await supabase.from('opportunities').delete().eq('created_by', targetUserId);
+
+    // 3. Delete profile from Supabase
     const { error } = await supabase.from('profiles').delete().eq('id', targetUserId);
     
     if (error) {

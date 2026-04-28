@@ -2,7 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import type { ActionResponse, Application } from '@/types';
+import type { ActionResponse, PaginatedResponse, Application } from '@/types';
 import { createNotification } from './notifications';
 import { sendEmail, emailApproved, emailRejected } from '@/lib/email';
 
@@ -21,7 +21,11 @@ export async function getMyApplications(): Promise<ActionResponse<Application[]>
   return { success: true, data: data || [] };
 }
 
-export async function getAllApplications(status?: string): Promise<ActionResponse<Application[]>> {
+export async function getAllApplications(
+  status?: string,
+  page = 1,
+  limit = 10
+): Promise<PaginatedResponse<Application[]> & { stats?: any }> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
@@ -33,14 +37,38 @@ export async function getAllApplications(status?: string): Promise<ActionRespons
 
   let query = supabase
     .from('applications')
-    .select('*, opportunity:opportunities(title, location, hours), student:profiles!student_id(full_name, email, avatar_url, phone, education_level, national_id_last3)')
-    .order('applied_at', { ascending: false });
+    .select('*, opportunity:opportunities(title, location, hours), student:profiles!student_id(full_name, email, avatar_url, phone, education_level, national_id_last3)', { count: 'exact' });
 
   if (status && status !== 'all') query = query.eq('status', status);
 
-  const { data, error } = await query;
+  // Pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.order('applied_at', { ascending: false }).range(from, to);
+
+  const { data, count, error } = await query;
+  
+  // Fetch stats
+  const { data: allData, error: statsError } = await supabase.from('applications').select('status');
+  let stats = null;
+  if (!statsError && allData) {
+    stats = {
+      total: allData.length,
+      pending: allData.filter(a => a.status === 'pending').length,
+      approved: allData.filter(a => a.status === 'approved').length,
+      rejected: allData.filter(a => a.status === 'rejected').length
+    };
+  }
+
   if (error) return { success: false, error: 'فشل في تحميل الطلبات' };
-  return { success: true, data: data || [] };
+  return { 
+    success: true, 
+    data: data || [],
+    totalCount: count || 0,
+    totalPages: count ? Math.ceil(count / limit) : 0,
+    currentPage: page,
+    stats
+  };
 }
 
 export async function applyToOpportunity(opportunityId: string): Promise<ActionResponse> {

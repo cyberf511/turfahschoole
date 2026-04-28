@@ -137,6 +137,12 @@ export interface ActionResponse<T = undefined> {
   error?: string;
 }
 
+export interface PaginatedResponse<T> extends ActionResponse<T> {
+  totalCount?: number;
+  totalPages?: number;
+  currentPage?: number;
+}
+
 // --- Education Level Labels ---
 
 export const EDUCATION_LABELS: Record<EducationLevel, string> = {

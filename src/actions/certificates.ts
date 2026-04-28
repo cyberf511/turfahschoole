@@ -35,7 +35,10 @@ export async function uploadCertificate(applicationId: string, certificatePath: 
   return { success: true };
 }
 
-export async function getCertificatesForReview(): Promise<ActionResponse<unknown[]>> {
+export async function getCertificatesForReview(
+  page = 1,
+  limit = 10
+): Promise<PaginatedResponse<unknown[]> & { stats?: any }> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
@@ -45,14 +48,41 @@ export async function getCertificatesForReview(): Promise<ActionResponse<unknown
     return { success: false, error: 'غير مصرح' };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('applications')
-    .select('*, opportunity:opportunities(title, hours), student:profiles!student_id(full_name, email, avatar_url)')
-    .eq('completion_status', 'completed_under_review')
-    .order('certificate_uploaded_at', { ascending: false });
+    .select('*, opportunity:opportunities(title, hours), student:profiles!student_id(full_name, email, avatar_url)', { count: 'exact' });
+
+  // Only those under review or verified maybe? The user wants all certificates or just for review?
+  // Certificates page says: "مراجعة وتوثيق شهادات الإنجاز" so we'll fetch all that have certificates
+  query = query.not('certificate_url', 'is', null);
+
+  // Pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  query = query.order('certificate_uploaded_at', { ascending: false }).range(from, to);
+
+  const { data, count, error } = await query;
+  
+  // Stats
+  const { data: allData, error: statsError } = await supabase.from('applications').select('completion_status').not('certificate_url', 'is', null);
+  let stats = null;
+  if (!statsError && allData) {
+    stats = {
+      total: allData.length,
+      pending: allData.filter(a => a.completion_status === 'completed_under_review').length,
+      verified: allData.filter(a => a.completion_status === 'verified').length
+    };
+  }
 
   if (error) return { success: false, error: 'فشل في تحميل الشهادات' };
-  return { success: true, data: data || [] };
+  return { 
+    success: true, 
+    data: data || [],
+    totalCount: count || 0,
+    totalPages: count ? Math.ceil(count / limit) : 0,
+    currentPage: page,
+    stats
+  };
 }
 
 export async function verifyCertificate(applicationId: string): Promise<ActionResponse> {

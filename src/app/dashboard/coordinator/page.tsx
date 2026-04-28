@@ -33,7 +33,7 @@ export default function CoordinatorDashboard() {
     <div className="animate-slide-up">
       <div className="section-header">
         <div>
-          <h1 className="section-title">لوحة المنسق</h1>
+          <h1 className="section-title">لوحة المنسقةة</h1>
           <p className="section-subtitle">نظرة عامة على برنامج التطوع</p>
         </div>
         <Link href="/dashboard/coordinator/opportunities/new" className="btn btn--primary">

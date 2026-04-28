@@ -24,7 +24,6 @@ const Icons = {
 
 export default async function LandingPage() {
   const { userId } = await auth();
-  if (userId) redirect('/dashboard');
 
   const contentRes = await getPublishedContent();
   const content = contentRes.data || [];
@@ -54,9 +53,15 @@ export default async function LandingPage() {
             منصة لحصر ساعات التطوع لدى الطالبات وتقديم الفرص التطوعية. تقدّمي لفرص التطوع، تتبعي ساعاتك، واحصلي على شهاداتك الموثقة — كل ذلك في مكان واحد.
           </p>
           <div className="landing-hero__actions">
-            <Link href="/sign-in" className="btn btn--primary btn--lg" id="hero-signin">
-              <Icons.login /> تسجيل الدخول
-            </Link>
+            {userId ? (
+              <Link href="/dashboard" className="btn btn--primary btn--lg" id="hero-signin">
+                <Icons.login /> العودة للوحة التحكم
+              </Link>
+            ) : (
+              <Link href="/sign-in" className="btn btn--primary btn--lg" id="hero-signin">
+                <Icons.login /> تسجيل الدخول
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -175,9 +180,15 @@ export default async function LandingPage() {
           <h2 className="landing-cta__title">ابدأ رحلة التطوع الآن</h2>
           <p className="landing-cta__desc">سجّل دخولك وانضم لمئات الطالبات في برنامج التطوع</p>
           <div className="landing-hero__actions">
-            <Link href="/sign-in" className="btn btn--primary btn--lg">
-              تسجيل الدخول
-            </Link>
+            {userId ? (
+              <Link href="/dashboard" className="btn btn--primary btn--lg">
+                العودة للوحة التحكم
+              </Link>
+            ) : (
+              <Link href="/sign-in" className="btn btn--primary btn--lg">
+                تسجيل الدخول
+              </Link>
+            )}
           </div>
         </div>
       </section>
