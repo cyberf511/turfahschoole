@@ -41,7 +41,7 @@ const coordinatorNav = [
 ];
 
 const commonNav = [
-  { href: '/notifications', icon: Icons.Bell, label: 'الإشعارات' },
+  { href: '/dashboard/notifications', icon: Icons.Bell, label: 'الإشعارات' },
 ];
 
 export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollapse }: SidebarProps) {

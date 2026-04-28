@@ -67,7 +67,7 @@ export function TopNav({ onMenuToggle, unreadCount = 0 }: TopNavProps) {
               <div className="notif-dropdown">
                 <div className="notif-dropdown__header">
                   <span className="notif-dropdown__title">الإشعارات</span>
-                  <Link href="/notifications" className="notif-dropdown__link" onClick={() => setShowNotifs(false)}>
+                  <Link href="/dashboard/notifications" className="notif-dropdown__link" onClick={() => setShowNotifs(false)}>
                     عرض الكل
                   </Link>
                 </div>
