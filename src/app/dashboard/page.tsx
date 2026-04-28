@@ -14,10 +14,24 @@ export default async function DashboardPage() {
     .single();
 
   if (!profile) {
-    redirect('/onboarding');
+    redirect('/');
   }
 
-  if (profile.role === 'super_admin') {
+  let currentRole = profile.role;
+  
+  // Auto-heal super_admin role if they created the account before the webhook update
+  const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase();
+  
+  if (
+    currentRole !== 'super_admin' && 
+    (allowedAdmins.includes(user.username || '') || user.emailAddresses?.[0]?.emailAddress?.toLowerCase() === superAdminEmail)
+  ) {
+    await supabase.from('profiles').update({ role: 'super_admin' }).eq('id', user.id);
+    currentRole = 'super_admin';
+  }
+
+  if (currentRole === 'super_admin') {
     redirect('/dashboard/admin');
   }
 
