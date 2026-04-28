@@ -15,25 +15,16 @@ export async function getCoordinatorStats(): Promise<ActionResponse<{ opportunit
   }
 
   try {
-    const [
-      { count: opportunities },
-      { count: pendingApps },
-      { count: pendingCerts },
-      { count: totalApps }
-    ] = await Promise.all([
-      supabase.from('opportunities').select('*', { count: 'exact', head: true }),
-      supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('applications').select('*', { count: 'exact', head: true }).not('certificate_url', 'is', null).eq('completion_status', 'completed_under_review'),
-      supabase.from('applications').select('*', { count: 'exact', head: true })
-    ]);
+    const { data: rpcStats, error } = await supabase.rpc('get_coordinator_stats');
+    if (error) throw error;
 
     return {
       success: true,
       data: {
-        opportunities: opportunities || 0,
-        pendingApps: pendingApps || 0,
-        pendingCerts: pendingCerts || 0,
-        totalApps: totalApps || 0,
+        opportunities: rpcStats?.opportunities || 0,
+        pendingApps: rpcStats?.pendingApps || 0,
+        pendingCerts: rpcStats?.pendingCerts || 0,
+        totalApps: rpcStats?.totalApps || 0,
       }
     };
   } catch (error) {

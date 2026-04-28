@@ -48,24 +48,14 @@ export async function getAllApplications(
 
   const { data, count, error } = await query;
   
-  // Fetch stats using fast exact counts
-  const [
-    { count: totalApps },
-    { count: pendingApps },
-    { count: approvedApps },
-    { count: rejectedApps }
-  ] = await Promise.all([
-    supabase.from('applications').select('*', { count: 'exact', head: true }),
-    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected')
-  ]);
+  // Fetch stats using fast exact counts via Database RPC
+  const { data: rpcStats, error: rpcError } = await supabase.rpc('get_application_stats');
 
   const stats = {
-    total: totalApps || 0,
-    pending: pendingApps || 0,
-    approved: approvedApps || 0,
-    rejected: rejectedApps || 0
+    total: rpcStats?.total || 0,
+    pending: rpcStats?.pending || 0,
+    approved: rpcStats?.approved || 0,
+    rejected: rpcStats?.rejected || 0
   };
 
   if (error) return { success: false, error: 'فشل في تحميل الطلبات' };
@@ -168,18 +158,9 @@ export async function getStudentHours(): Promise<ActionResponse<number>> {
   if (!user) return { success: false, error: 'غير مصرح' };
 
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase
-    .from('applications')
-    .select('opportunity:opportunities(hours)')
-    .eq('student_id', user.id)
-    .eq('completion_status', 'verified');
+  const { data, error } = await supabase.rpc('get_student_total_hours', { p_student_id: user.id });
 
   if (error) return { success: false, error: 'فشل في حساب الساعات' };
 
-  const totalHours = (data || []).reduce((sum, app) => {
-    const hours = ((app.opportunity as unknown) as { hours: number })?.hours || 0;
-    return sum + hours;
-  }, 0);
-
-  return { success: true, data: totalHours };
+  return { success: true, data: data || 0 };
 }
