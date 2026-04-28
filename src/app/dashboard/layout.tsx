@@ -29,14 +29,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      {sidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-      )}
       <div className="dashboard-main">
-        <TopNav
-          profile={profile}
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-        />
+        <TopNav onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <main className="dashboard-content animate-fade-in">
           {children}
         </main>
