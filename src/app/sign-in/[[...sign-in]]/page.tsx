@@ -5,7 +5,7 @@ export default function SignInPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-card__header">
-          <div className="auth-card__logo">منصة التطوع الطلابي</div>
+          <div className="auth-card__logo">ثانوية طرفة بنت عبدالعزيز</div>
           <p className="auth-card__subtitle">سجّل دخولك للمتابعة</p>
         </div>
         <SignIn

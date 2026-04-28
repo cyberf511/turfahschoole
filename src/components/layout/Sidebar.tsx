@@ -22,6 +22,7 @@ const coordinatorNav = [
   { href: '/dashboard/coordinator/opportunities', icon: '📝', label: 'إدارة الفرص' },
   { href: '/dashboard/coordinator/applications', icon: '📋', label: 'مراجعة الطلبات' },
   { href: '/dashboard/coordinator/certificates', icon: '✅', label: 'مراجعة الشهادات' },
+  { href: '/dashboard/coordinator/content', icon: '🎨', label: 'إدارة المحتوى' },
 ];
 
 export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
@@ -39,7 +40,7 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
   return (
     <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
       <div className="sidebar__header">
-        <span className="sidebar__logo">⭐ منصة التطوع</span>
+        <span className="sidebar__logo">⭐ ثانوية طرفة</span>
       </div>
 
       <nav className="sidebar__nav">

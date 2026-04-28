@@ -8,8 +8,8 @@ import '@/styles/dashboard.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'منصة التطوع الطلابي',
-  description: 'منصة احترافية لإدارة برامج التطوع الطلابي في المدارس',
+  title: 'منصة العمل التطوعي — ثانوية طرفة بنت عبدالعزيز',
+  description: 'منصة لحصر ساعات التطوع لدى الطالبات وتقديم الفرص التطوعية في ثانوية طرفة بنت عبدالعزيز',
   icons: { icon: '/favicon.ico' },
 };
 
