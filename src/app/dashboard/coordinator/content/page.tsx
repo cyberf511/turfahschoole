@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Loading } from '@/components/ui/Loading';
+import { Modal } from '@/components/ui/Modal';
 import { getAllContent, createContent, updateContent, deleteContent, getContentUploadUrl, type SiteContent } from '@/actions/content';
 
 const TYPE_LABELS: Record<SiteContent['type'], string> = {
@@ -22,6 +23,7 @@ export default function ContentManagement() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [uploading, setUploading] = useState(false);
   const [filter, setFilter] = useState<string>('all');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -114,13 +116,14 @@ export default function ContentManagement() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا المحتوى؟')) return;
-    const res = await deleteContent(id);
+  const executeDelete = async () => {
+    if (!deleteConfirmId) return;
+    const res = await deleteContent(deleteConfirmId);
     if (res.success) {
-      setContent((prev) => prev.filter((c) => c.id !== id));
+      setContent((prev) => prev.filter((c) => c.id !== deleteConfirmId));
       setMessage({ text: 'تم الحذف', type: 'success' });
     }
+    setDeleteConfirmId(null);
   };
 
   const handleTogglePublish = async (item: SiteContent) => {
@@ -281,7 +284,20 @@ export default function ContentManagement() {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>ترتيب: {item.sort_order}</span>
                     </div>
                     {item.type === 'stat' ? (
-                      <div style={{ fontWeight: 600 }}>{item.stat_value} — {item.stat_label}</div>
+                      <div style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '12px', 
+                        background: 'var(--bg-secondary)', 
+                        padding: '12px 20px', 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--border-color)', 
+                        marginTop: '8px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                      }}>
+                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)', lineHeight: 1 }}>{item.stat_value}</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{item.stat_label}</div>
+                      </div>
                     ) : (
                       <div style={{ fontWeight: 600 }}>{item.title || 'بدون عنوان'}</div>
                     )}
@@ -297,13 +313,24 @@ export default function ContentManagement() {
                     {item.is_published ? '👁️ إخفاء' : '👁️ نشر'}
                   </button>
                   <button className="btn btn--secondary btn--sm" onClick={() => handleEdit(item)}>✏️ تعديل</button>
-                  <button className="btn btn--danger btn--sm" onClick={() => handleDelete(item.id)}>🗑️</button>
+                  <button className="btn btn--danger btn--sm" onClick={() => setDeleteConfirmId(item.id)}>🗑️</button>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        title="تأكيد الحذف"
+        description="هل أنت متأكد من حذف هذا المحتوى؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmText="حذف"
+        cancelText="إلغاء"
+        isDanger={true}
+        onConfirm={executeDelete}
+      />
     </div>
   );
 }
