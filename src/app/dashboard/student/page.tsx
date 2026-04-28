@@ -144,7 +144,7 @@ export default function StudentDashboard() {
             <span>{targetHours}</span>
           </div>
         </div>
-        <p className="dash-progress-card__msg">✨ أنت على الطريق الصحيح! استمري في عطائك</p>
+        <p className="dash-progress-card__msg">أنتِ على الطريق الصحيح! استمري في عطائك</p>
       </div>
 
       {/* Two columns: Opportunities + Activities */}
