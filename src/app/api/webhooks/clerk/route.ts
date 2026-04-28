@@ -51,18 +51,7 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
     const email = email_addresses[0]?.email_address || '';
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || null;
-
-    // Domain checking logic for automatic role assignment
-    const publicDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'apple.com', 'live.com', 'msn.com'];
-    const emailDomain = email.split('@')[1]?.toLowerCase() || '';
-    const isPublicEmail = publicDomains.includes(emailDomain);
-
-    let role = 'student';
-    if (email.toLowerCase() === superAdminEmail) {
-      role = 'super_admin';
-    } else if (!isPublicEmail) {
-      role = 'coordinator';
-    }
+    const role = email.toLowerCase() === superAdminEmail ? 'super_admin' : 'student';
 
     const { error } = await supabase.from('profiles').upsert({
       id,
