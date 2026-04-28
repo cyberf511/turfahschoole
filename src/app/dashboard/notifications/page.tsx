@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Loading } from '@/components/ui/Loading';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getNotifications, markAsRead, markAllAsRead } from '@/actions/notifications';
@@ -46,7 +47,7 @@ export default function NotificationsPage() {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   };
 
-  if (loading) return <div className="page-loading"><div className="loading-spinner loading-spinner--lg" /></div>;
+  if (loading) return <Loading />;
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 

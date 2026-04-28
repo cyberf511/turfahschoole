@@ -1,18 +1,43 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createOpportunity } from '@/actions/opportunities';
-import { Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { getOpportunity, updateOpportunity } from '@/actions/opportunities';
+import { Edit } from 'lucide-react';
 
-export default function NewOpportunity() {
+export default function EditOpportunity() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const params = useParams();
+  const id = params.id as string;
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     title: '', description: '', location: '', hours: '',
     requirements: '', max_participants: '', start_date: '', end_date: '',
   });
+
+  useEffect(() => {
+    getOpportunity(id).then((res) => {
+      if (res.success && res.data) {
+        const d = res.data;
+        setForm({
+          title: d.title || '',
+          description: d.description || '',
+          location: d.location || '',
+          hours: d.hours ? d.hours.toString() : '',
+          requirements: d.requirements || '',
+          max_participants: d.max_participants ? d.max_participants.toString() : '',
+          start_date: d.start_date || '',
+          end_date: d.end_date || '',
+        });
+      } else {
+        setError('تعذر تحميل بيانات الفرصة');
+      }
+      setLoading(false);
+    });
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,9 +45,9 @@ export default function NewOpportunity() {
       setError('العنوان والوصف والموقع والساعات مطلوبة');
       return;
     }
-    setLoading(true);
+    setSaving(true);
     setError('');
-    const res = await createOpportunity({
+    const res = await updateOpportunity(id, {
       title: form.title,
       description: form.description,
       location: form.location,
@@ -35,17 +60,19 @@ export default function NewOpportunity() {
     if (res.success) {
       router.push('/dashboard/coordinator/opportunities');
     } else {
-      setError(res.error || 'حدث خطأ');
-      setLoading(false);
+      setError(res.error || 'حدث خطأ أثناء التحديث');
+      setSaving(false);
     }
   };
+
+  if (loading) return <div className="page-loading"><div className="loading-spinner loading-spinner--lg" /></div>;
 
   return (
     <div className="animate-slide-up">
       <div className="section-header">
         <div>
-          <h1 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus color="var(--accent-primary)" /> إنشاء فرصة تطوعية جديدة</h1>
-          <p className="section-subtitle">أضف فرصة تطوعية جديدة للطالبات</p>
+          <h1 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Edit color="var(--accent-primary)" /> تعديل الفرصة التطوعية</h1>
+          <p className="section-subtitle">تعديل بيانات الفرصة التطوعية الحالية</p>
         </div>
       </div>
 
@@ -91,8 +118,8 @@ export default function NewOpportunity() {
           </div>
           {error && <div className="form-error" style={{ padding: '10px', background: 'var(--danger-soft)', borderRadius: 'var(--radius-md)' }}>{error}</div>}
           <div className="flex-gap">
-            <button type="submit" className="btn btn--primary btn--lg" disabled={loading}>
-              {loading ? <span className="loading-spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} /> : 'إنشاء الفرصة'}
+            <button type="submit" className="btn btn--primary btn--lg" disabled={saving}>
+              {saving ? <span className="loading-spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} /> : 'حفظ التغييرات'}
             </button>
             <button type="button" className="btn btn--secondary btn--lg" onClick={() => router.back()}>إلغاء</button>
           </div>

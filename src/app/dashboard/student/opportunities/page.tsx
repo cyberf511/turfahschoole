@@ -5,6 +5,7 @@ import { getOpportunities } from '@/actions/opportunities';
 import { applyToOpportunity } from '@/actions/applications';
 import type { Opportunity } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { Loading } from '@/components/ui/Loading';
 
 export default function StudentOpportunities() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -32,11 +33,7 @@ export default function StudentOpportunities() {
   };
 
   if (loading) {
-    return (
-      <div className="page-loading">
-        <div className="loading-spinner loading-spinner--lg" />
-      </div>
-    );
+    return <Loading />;
   }
 
   return (

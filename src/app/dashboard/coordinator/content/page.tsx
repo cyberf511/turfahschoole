@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { Loading } from '@/components/ui/Loading';
 import { getAllContent, createContent, updateContent, deleteContent, getContentUploadUrl, type SiteContent } from '@/actions/content';
 
 const TYPE_LABELS: Record<SiteContent['type'], string> = {
@@ -131,7 +132,7 @@ export default function ContentManagement() {
 
   const filtered = filter === 'all' ? content : content.filter((c) => c.type === filter);
 
-  if (loading) return <div className="page-loading"><div className="loading-spinner loading-spinner--lg" /></div>;
+  if (loading) return <Loading />;
 
   const needsImage = ['hero_image', 'news', 'achievement', 'gallery_image'].includes(form.type);
   const needsStats = form.type === 'stat';

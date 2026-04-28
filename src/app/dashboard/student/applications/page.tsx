@@ -6,6 +6,7 @@ import type { Application } from '@/types';
 import { APPLICATION_STATUS_LABELS, COMPLETION_STATUS_LABELS } from '@/types';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { Loading } from '@/components/ui/Loading';
 
 export default function StudentApplications() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -20,7 +21,7 @@ export default function StudentApplications() {
   }, []);
 
   if (loading) {
-    return <div className="page-loading"><div className="loading-spinner loading-spinner--lg" /></div>;
+    return <Loading />;
   }
 
   const filtered = filter === 'all' ? applications : applications.filter((a) => a.status === filter);

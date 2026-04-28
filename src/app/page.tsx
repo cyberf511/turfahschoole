@@ -68,7 +68,7 @@ export default async function LandingPage() {
 
       {/* === STATS === */}
       {stats.length > 0 && (
-        <section className="landing-stats">
+        <section className="landing-stats" style={{ marginTop: '-40px', position: 'relative', zIndex: 10 }}>
           <div className="landing-stats__grid stagger-children">
             {stats.map((stat) => (
               <div key={stat.id} className="landing-stat animate-slide-up">

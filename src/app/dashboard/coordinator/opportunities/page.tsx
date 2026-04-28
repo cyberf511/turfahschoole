@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { StatsCards } from '@/components/ui/StatsCards';
 import { exportToCSV } from '@/lib/export';
 import { Loading } from '@/components/ui/Loading';
+import { FileText, CheckCircle, PauseCircle, Clock } from 'lucide-react';
 
 // Premium SVG Icons
 const Icons = {
@@ -116,10 +117,10 @@ export default function CoordinatorOpportunities() {
 
       {stats && (
         <StatsCards stats={[
-          { label: 'إجمالي الفرص', value: stats.total, icon: '📝', color: 'var(--accent-primary)' },
-          { label: 'الفرص النشطة', value: stats.active, icon: '✅', color: '#10b981' },
-          { label: 'الفرص المتوقفة', value: stats.inactive, icon: '⏸️', color: '#f59e0b' },
-          { label: 'إجمالي الساعات', value: stats.totalHours, icon: '⏱️', color: '#8b5cf6' }
+          { label: 'إجمالي الفرص', value: stats.total, icon: <FileText size={24} />, color: 'var(--accent-primary)' },
+          { label: 'الفرص النشطة', value: stats.active, icon: <CheckCircle size={24} />, color: '#10b981' },
+          { label: 'الفرص المتوقفة', value: stats.inactive, icon: <PauseCircle size={24} />, color: '#f59e0b' },
+          { label: 'إجمالي الساعات', value: stats.totalHours, icon: <Clock size={24} />, color: '#8b5cf6' }
         ]} />
       )}
 

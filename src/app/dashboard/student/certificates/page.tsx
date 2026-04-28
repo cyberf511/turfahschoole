@@ -5,6 +5,7 @@ import { getMyApplications } from '@/actions/applications';
 import { getSignedUploadUrl, uploadCertificate } from '@/actions/certificates';
 import type { Application } from '@/types';
 import { COMPLETION_STATUS_LABELS } from '@/types';
+import { Loading } from '@/components/ui/Loading';
 
 export default function StudentCertificates() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -67,7 +68,7 @@ export default function StudentCertificates() {
     if (fileRef.current) fileRef.current.value = '';
   };
 
-  if (loading) return <div className="page-loading"><div className="loading-spinner loading-spinner--lg" /></div>;
+  if (loading) return <Loading />;
 
   return (
     <div className="animate-slide-up">

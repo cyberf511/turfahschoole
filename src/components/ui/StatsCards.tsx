@@ -1,5 +1,12 @@
 import React from 'react';
-import type { StatsCardData } from '@/types';
+
+export interface StatsCardData {
+  label: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  color?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
 
 interface StatsCardsProps {
   stats: StatsCardData[];

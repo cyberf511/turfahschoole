@@ -130,6 +130,9 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
     return { success: false, error: 'غير مصرح' };
   }
 
+  // Delete related applications first
+  await supabase.from('applications').delete().eq('opportunity_id', id);
+
   const { error } = await supabase.from('opportunities').delete().eq('id', id);
   if (error) return { success: false, error: 'فشل في حذف الفرصة' };
   return { success: true };

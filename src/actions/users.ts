@@ -102,7 +102,17 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
     // 2. Delete relations from Supabase to prevent FK constraint failures
     await supabase.from('notifications').delete().eq('user_id', targetUserId);
     await supabase.from('applications').delete().eq('student_id', targetUserId);
-    await supabase.from('applications').delete().eq('reviewed_by', targetUserId);
+    
+    // Set reviewed_by to null instead of deleting the application
+    await supabase.from('applications').update({ verified_by: null }).eq('verified_by', targetUserId);
+
+    // Cascade delete applications from opportunities this user created
+    const { data: opps } = await supabase.from('opportunities').select('id').eq('created_by', targetUserId);
+    if (opps && opps.length > 0) {
+      const oppIds = opps.map(o => o.id);
+      await supabase.from('applications').delete().in('opportunity_id', oppIds);
+    }
+
     await supabase.from('opportunities').delete().eq('created_by', targetUserId);
 
     // 3. Delete profile from Supabase
