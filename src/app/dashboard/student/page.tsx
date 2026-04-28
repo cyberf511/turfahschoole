@@ -1,13 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { getMyApplications, getStudentHours } from '@/actions/applications';
-import type { Application } from '@/types';
+import type { Application, Opportunity } from '@/types';
 import { APPLICATION_STATUS_LABELS, COMPLETION_STATUS_LABELS } from '@/types';
 import Link from 'next/link';
+import { DashboardSkeleton } from '@/components/ui/Loaders';
+
+// For fetching available opportunities
+async function getAvailableOpportunities() {
+  const { getOpportunities } = await import('@/actions/opportunities');
+  return getOpportunities(true);
+}
 
 export default function StudentDashboard() {
+  const { user } = useUser();
   const [applications, setApplications] = useState<Application[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -15,137 +25,209 @@ export default function StudentDashboard() {
     Promise.all([
       getMyApplications(),
       getStudentHours(),
-    ]).then(([appsRes, hoursRes]) => {
+      getAvailableOpportunities(),
+    ]).then(([appsRes, hoursRes, oppsRes]) => {
       if (appsRes.success) setApplications(appsRes.data || []);
       if (hoursRes.success) setTotalHours(hoursRes.data || 0);
+      if (oppsRes.success) setOpportunities((oppsRes.data || []).slice(0, 3));
       setLoading(false);
     });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <div className="loading-spinner loading-spinner--lg" />
-        <div className="page-loading__text">جاري التحميل...</div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
   const approvedCount = applications.filter((a) => a.status === 'approved').length;
   const verifiedCount = applications.filter((a) => a.completion_status === 'verified').length;
+  const targetHours = 40;
+  const progressPercent = Math.min(Math.round((totalHours / targetHours) * 100), 100);
+  const firstName = user?.firstName || 'طالبة';
+
+  // Activity items from applications
+  const recentApps = applications.slice(0, 4);
 
   return (
-    <div className="animate-slide-up">
-      <div className="section-header">
-        <div>
-          <h1 className="section-title">لوحة المعلومات</h1>
-          <p className="section-subtitle">مرحباً بك في لوحة التحكم الخاصة بك</p>
-        </div>
-        <Link href="/dashboard/student/opportunities" className="btn btn--primary">
-          🔍 استكشف الفرص
-        </Link>
+    <div className="dash-page animate-fade-in">
+      {/* Welcome */}
+      <div className="dash-welcome">
+        <h1 className="dash-welcome__name">مرحباً، {firstName} 👋</h1>
+        <p className="dash-welcome__sub">هنا نظرة عامة على نشاطك التطوعي</p>
       </div>
 
       {/* Stats Row */}
-      <div className="grid-4 stagger-children" style={{ marginBottom: '24px' }}>
-        <div className="stats-card animate-slide-up">
-          <div className="stats-card__icon stats-card__icon--blue">⏱️</div>
-          <div className="stats-card__info">
-            <div className="stats-card__label">ساعات التطوع</div>
-            <div className="stats-card__value">{totalHours}</div>
+      <div className="dash-stats stagger-children">
+        <div className="dash-stat-card dash-stat-card--blue animate-slide-up">
+          <div className="dash-stat-card__top">
+            <div className="dash-stat-card__icon">⏱️</div>
+            <span className="dash-stat-card__title">إجمالي الساعات</span>
+          </div>
+          <div className="dash-stat-card__value">{totalHours}</div>
+          <div className="dash-stat-card__sub">من أصل الساعات المطلوبة</div>
+          <div className="dash-stat-card__sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <polyline points="0,20 15,16 30,18 45,10 60,14 75,6 100,8" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
           </div>
         </div>
-        <div className="stats-card animate-slide-up">
-          <div className="stats-card__icon stats-card__icon--amber">📋</div>
-          <div className="stats-card__info">
-            <div className="stats-card__label">طلبات معلقة</div>
-            <div className="stats-card__value">{pendingCount}</div>
+        <div className="dash-stat-card dash-stat-card--amber animate-slide-up">
+          <div className="dash-stat-card__top">
+            <div className="dash-stat-card__icon">📋</div>
+            <span className="dash-stat-card__title">الطلبات قيد المعالجة</span>
+          </div>
+          <div className="dash-stat-card__value">{pendingCount}</div>
+          <div className="dash-stat-card__sub">طلب قيد المراجعة</div>
+          <div className="dash-stat-card__sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <polyline points="0,18 20,14 40,20 60,8 80,12 100,6" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
           </div>
         </div>
-        <div className="stats-card animate-slide-up">
-          <div className="stats-card__icon stats-card__icon--green">✅</div>
-          <div className="stats-card__info">
-            <div className="stats-card__label">طلبات مقبولة</div>
-            <div className="stats-card__value">{approvedCount}</div>
+        <div className="dash-stat-card dash-stat-card--green animate-slide-up">
+          <div className="dash-stat-card__top">
+            <div className="dash-stat-card__icon">✅</div>
+            <span className="dash-stat-card__title">الشهادات المعتمدة</span>
+          </div>
+          <div className="dash-stat-card__value">{verifiedCount}</div>
+          <div className="dash-stat-card__sub">شهادة معتمدة</div>
+          <div className="dash-stat-card__sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <polyline points="0,22 25,18 50,10 75,14 100,4" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
           </div>
         </div>
-        <div className="stats-card animate-slide-up">
-          <div className="stats-card__icon stats-card__icon--purple">🏆</div>
-          <div className="stats-card__info">
-            <div className="stats-card__label">شهادات موثقة</div>
-            <div className="stats-card__value">{verifiedCount}</div>
+        {/* Ring card */}
+        <div className="dash-stat-card dash-stat-card--ring animate-slide-up">
+          <div className="dash-stat-card__top">
+            <div className="dash-stat-card__icon">📊</div>
+            <span className="dash-stat-card__title">تقدم الساعات</span>
           </div>
+          <div className="dash-stat-card__ring-wrap">
+            <svg viewBox="0 0 100 100" className="dash-ring-svg">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg-tertiary)" strokeWidth="6" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#ringGrad)" strokeWidth="6" strokeLinecap="round"
+                strokeDasharray={`${progressPercent * 2.639} 263.9`}
+                transform="rotate(-90 50 50)"
+                className="dash-ring-progress"
+              />
+              <defs>
+                <linearGradient id="ringGrad">
+                  <stop offset="0%" stopColor="#22c55e" />
+                  <stop offset="100%" stopColor="#06b6d4" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="dash-stat-card__ring-text">
+              <span className="dash-stat-card__ring-pct">{progressPercent}%</span>
+            </div>
+          </div>
+          <div className="dash-stat-card__sub">{totalHours} من {targetHours} ساعة مطلوبة</div>
         </div>
       </div>
 
-      {/* Hours Progress */}
-      <div className="hours-widget animate-slide-up" style={{ marginBottom: '24px' }}>
-        <div className="hours-widget__header">
-          <span className="hours-widget__title">⏱️ ساعات التطوع المكتملة</span>
+      {/* Progress Bar */}
+      <div className="dash-progress-card animate-slide-up">
+        <div className="dash-progress-card__header">
+          <span className="dash-progress-card__title">تقدم ساعات التطوع</span>
         </div>
-        <div className="hours-widget__value">{totalHours}</div>
-        <div className="hours-widget__label">ساعة تطوعية مكتملة وموثقة</div>
-        <div className="progress progress--lg">
-          <div
-            className="progress__fill"
-            style={{ width: `${Math.min((totalHours / 40) * 100, 100)}%` }}
-          />
+        <div className="dash-progress-bar-wrap">
+          <div className="dash-progress-bar">
+            <div className="dash-progress-bar__fill" style={{ width: `${progressPercent}%` }}>
+              <span className="dash-progress-bar__tooltip">{totalHours} ساعة</span>
+            </div>
+          </div>
+          <div className="dash-progress-bar__labels">
+            <span>0</span>
+            <span>{targetHours}</span>
+          </div>
         </div>
-        <div className="progress-label" style={{ marginTop: '8px' }}>
-          <span>{totalHours} ساعة مكتملة</span>
-          <span>الهدف: 40 ساعة</span>
+        <div className="dash-progress-card__target">
+          <span className="dash-progress-card__target-val">{targetHours}</span>
+          <span className="dash-progress-card__target-lbl">الهدف الكلي<br />ساعة</span>
         </div>
+        <p className="dash-progress-card__msg">✨ أنت على الطريق الصحيح! استمري في عطائك</p>
       </div>
 
-      {/* Recent Applications */}
-      <div className="card animate-slide-up">
-        <div className="card__header">
-          <h3 className="card__title">📋 آخر الطلبات</h3>
-          <Link href="/dashboard/student/applications" style={{ fontSize: '0.85rem', color: 'var(--accent-primary)' }}>
-            عرض الكل
-          </Link>
-        </div>
-        {applications.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state__icon">📋</div>
-            <div className="empty-state__title">لا توجد طلبات بعد</div>
-            <div className="empty-state__desc">ابدأ بالتقديم على فرص التطوع المتاحة</div>
-            <Link href="/dashboard/student/opportunities" className="btn btn--primary">
-              استكشف الفرص
-            </Link>
+      {/* Two columns: Opportunities + Activities */}
+      <div className="dash-two-cols">
+        {/* Opportunities */}
+        <div className="dash-col dash-col--main animate-slide-up">
+          <div className="dash-col__header">
+            <h2 className="dash-col__title">الفرص التطوعية المتاحة</h2>
+            <Link href="/dashboard/student/opportunities" className="dash-col__link">عرض الكل</Link>
           </div>
-        ) : (
-          <div className="activity-list">
-            {applications.slice(0, 5).map((app) => {
-              const opp = app.opportunity as { title?: string; hours?: number } | undefined;
-              let statusLabel = APPLICATION_STATUS_LABELS[app.status];
-              let dotColor = 'activity-item__dot--amber';
-              if (app.completion_status) {
-                statusLabel = COMPLETION_STATUS_LABELS[app.completion_status];
-                dotColor = app.completion_status === 'verified' ? 'activity-item__dot--green' : 'activity-item__dot--blue';
-              } else if (app.status === 'approved') {
-                dotColor = 'activity-item__dot--green';
-              } else if (app.status === 'rejected') {
-                dotColor = 'activity-item__dot--red';
-              }
-
-              return (
-                <div key={app.id} className="activity-item">
-                  <div className={`activity-item__dot ${dotColor}`} />
-                  <div className="activity-item__content">
-                    <div className="activity-item__text">
-                      {opp?.title || 'فرصة تطوعية'} — <span style={{ color: 'var(--text-secondary)' }}>{statusLabel}</span>
+          {opportunities.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state__icon">🔍</div>
+              <div className="empty-state__title">لا توجد فرص حالياً</div>
+              <div className="empty-state__desc">سيتم إضافة فرص جديدة قريباً</div>
+            </div>
+          ) : (
+            <div className="dash-opps-grid">
+              {opportunities.map((opp) => (
+                <div key={opp.id} className="dash-opp-card hover-lift">
+                  <div className="dash-opp-card__img">
+                    <div className="dash-opp-card__img-placeholder">🎯</div>
+                    <span className="dash-opp-card__category">تطوع</span>
+                  </div>
+                  <div className="dash-opp-card__body">
+                    <h3 className="dash-opp-card__title">{opp.title}</h3>
+                    <p className="dash-opp-card__desc">{opp.description}</p>
+                    <div className="dash-opp-card__meta">
+                      <span>⏱️ {opp.hours} ساعات</span>
+                      <span>📍 {opp.location || 'المدرسة'}</span>
                     </div>
-                    <div className="activity-item__time">
-                      {opp?.hours ? `${opp.hours} ساعة` : ''}
-                    </div>
+                    <Link href="/dashboard/student/opportunities" className="btn btn--primary btn--sm btn--full">
+                      تقديم الآن
+                    </Link>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="dash-col dash-col--side animate-slide-up">
+          <div className="dash-col__header">
+            <h2 className="dash-col__title">الأنشطة الأخيرة</h2>
+            <Link href="/dashboard/student/applications" className="dash-col__link">عرض الكل</Link>
           </div>
-        )}
+          {recentApps.length === 0 ? (
+            <div className="empty-state" style={{ padding: '40px 16px' }}>
+              <div className="empty-state__icon">📋</div>
+              <div className="empty-state__title">لا توجد أنشطة</div>
+            </div>
+          ) : (
+            <div className="dash-activity-list">
+              {recentApps.map((app) => {
+                const opp = (app.opportunity as unknown) as { title?: string; hours?: number } | undefined;
+                let icon = '📋';
+                let colorClass = 'dash-activity--amber';
+                if (app.completion_status === 'verified') { icon = '✅'; colorClass = 'dash-activity--green'; }
+                else if (app.status === 'approved') { icon = '✅'; colorClass = 'dash-activity--green'; }
+                else if (app.status === 'rejected') { icon = '❌'; colorClass = 'dash-activity--red'; }
+
+                const statusText = app.completion_status
+                  ? COMPLETION_STATUS_LABELS[app.completion_status]
+                  : APPLICATION_STATUS_LABELS[app.status];
+
+                return (
+                  <div key={app.id} className={`dash-activity-item ${colorClass}`}>
+                    <div className="dash-activity-item__icon">{icon}</div>
+                    <div className="dash-activity-item__content">
+                      <div className="dash-activity-item__text">
+                        {statusText} في فرصة <strong>{opp?.title || 'تطوعية'}</strong>
+                      </div>
+                      <div className="dash-activity-item__time">
+                        {app.applied_at ? new Date(app.applied_at).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }) : ''}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

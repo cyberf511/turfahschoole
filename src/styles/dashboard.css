@@ -60,37 +60,62 @@
 .notif-item__time { font-size: 0.7rem; color: var(--text-tertiary); margin-top: 4px; }
 @media (max-width: 768px) { .notif-dropdown { width: calc(100vw - 32px); inset-inline-end: -60px; } }
 
-/* --- Stats Card --- */
-.stats-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: flex-start; gap: 16px; transition: all var(--transition-fast); }
-.stats-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+/* --- Stats Card (Premium) --- */
+.stats-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: center; gap: 14px; transition: all var(--transition-fast); position: relative; overflow: hidden; }
+.stats-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+.stats-card__accent { position: absolute; top: 0; inset-inline: 0; height: 3px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.stats-card--gradient-blue .stats-card__accent { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+.stats-card--gradient-green .stats-card__accent { background: linear-gradient(90deg, #22c55e, #10b981); }
+.stats-card--gradient-amber .stats-card__accent { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.stats-card--gradient-purple .stats-card__accent { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+.stats-card--gradient-blue:hover { box-shadow: 0 8px 24px rgba(59,130,246,0.15); }
+.stats-card--gradient-green:hover { box-shadow: 0 8px 24px rgba(34,197,94,0.15); }
+.stats-card--gradient-amber:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.15); }
+.stats-card--gradient-purple:hover { box-shadow: 0 8px 24px rgba(139,92,246,0.15); }
+.stats-card__icon-wrap { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg-tertiary); }
+.stats-card__icon-emoji { font-size: 1.4rem; }
+.stats-card__info { flex: 1; }
+.stats-card__label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; }
+.stats-card__value { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); line-height: 1; animation: countUp var(--transition-slow) ease-out; }
+/* Legacy compat */
 .stats-card__icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .stats-card__icon--blue { background: var(--accent-primary-soft); color: var(--accent-primary); }
 .stats-card__icon--green { background: var(--success-soft); color: var(--success); }
 .stats-card__icon--amber { background: var(--warning-soft); color: var(--warning); }
 .stats-card__icon--red { background: var(--danger-soft); color: var(--danger); }
 .stats-card__icon--purple { background: var(--info-soft); color: var(--info); }
-.stats-card__info { flex: 1; }
-.stats-card__label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
-.stats-card__value { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); line-height: 1; animation: countUp var(--transition-slow) ease-out; }
 
-/* --- Hours Progress Widget --- */
+/* --- Hours Progress Card (Premium) --- */
+.hours-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; position: relative; overflow: hidden; }
+.hours-card::before { content: ''; position: absolute; top: -50%; inset-inline-end: -30%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%); pointer-events: none; }
+.hours-card__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.hours-card__title { font-size: 1rem; font-weight: 600; }
+.hours-card__percent { font-size: 0.9rem; font-weight: 700; background: var(--accent-gradient-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hours-card__center { display: flex; justify-content: center; padding: 12px 0; }
+.hours-card__ring { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.hours-card__ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hours-card__ring-value { font-size: 1.75rem; font-weight: 800; background: var(--accent-gradient-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; z-index: 1; }
+.hours-card__ring-label { font-size: 0.75rem; color: var(--text-tertiary); z-index: 1; }
+/* Legacy hours widget */
 .hours-widget { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
 .hours-widget__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .hours-widget__title { font-size: 1rem; font-weight: 600; }
 .hours-widget__value { font-size: 2.5rem; font-weight: 700; background: var(--accent-gradient-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; margin-bottom: 4px; }
 .hours-widget__label { font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 16px; }
 
-/* --- Recent Activity --- */
+/* --- Recent Activity (Premium) --- */
 .activity-list { display: flex; flex-direction: column; gap: 0; }
-.activity-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); position: relative; }
+.activity-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); position: relative; transition: background var(--transition-fast); }
 .activity-item:last-child { border-bottom: none; }
-.activity-item__dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.activity-item__dot--blue { background: var(--accent-primary); }
-.activity-item__dot--green { background: var(--success); }
-.activity-item__dot--amber { background: var(--warning); }
-.activity-item__dot--red { background: var(--danger); }
+.activity-item__dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
+.activity-item__dot--blue { background: var(--accent-primary); box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+.activity-item__dot--green { background: var(--success); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+.activity-item__dot--amber { background: var(--warning); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+.activity-item__dot--red { background: var(--danger); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
 .activity-item__content { flex: 1; }
-.activity-item__text { font-size: 0.85rem; color: var(--text-primary); }
+.activity-item__text { font-size: 0.875rem; color: var(--text-primary); font-weight: 500; margin-bottom: 4px; }
+.activity-item__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.activity-item__hours { font-size: 0.75rem; color: var(--text-tertiary); }
 .activity-item__time { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 2px; }
 
 /* --- Opportunity Card --- */

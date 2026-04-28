@@ -5,6 +5,7 @@ import '@/styles/globals.css';
 import '@/styles/animations.css';
 import '@/styles/components.css';
 import '@/styles/dashboard.css';
+import '@/styles/premium-dash.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
