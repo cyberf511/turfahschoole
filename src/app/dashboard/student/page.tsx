@@ -150,10 +150,10 @@ export default function StudentDashboard() {
       {/* Two columns: Opportunities + Activities */}
       <div className="dash-two-cols">
         {/* Opportunities */}
-        <div className="dash-col dash-col--main animate-slide-up">
-          <div className="dash-col__header">
-            <h2 className="dash-col__title">الفرص التطوعية المتاحة</h2>
-            <Link href="/dashboard/student/opportunities" className="dash-col__link">عرض الكل</Link>
+        <div className="dash-card-wrap animate-slide-up">
+          <div className="dash-card-wrap__header">
+            <h2 className="dash-card-wrap__title">الفرص التطوعية المتاحة</h2>
+            <Link href="/dashboard/student/opportunities" className="dash-card-wrap__link">عرض الكل</Link>
           </div>
           {opportunities.length === 0 ? (
             <div className="empty-state">
@@ -187,10 +187,10 @@ export default function StudentDashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="dash-col dash-col--side animate-slide-up">
-          <div className="dash-col__header">
-            <h2 className="dash-col__title">الأنشطة الأخيرة</h2>
-            <Link href="/dashboard/student/applications" className="dash-col__link">عرض الكل</Link>
+        <div className="dash-card-wrap animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <div className="dash-card-wrap__header">
+            <h2 className="dash-card-wrap__title">الأنشطة الأخيرة</h2>
+            <Link href="/dashboard/student/applications" className="dash-card-wrap__link">عرض الكل</Link>
           </div>
           {recentApps.length === 0 ? (
             <div className="empty-state" style={{ padding: '40px 16px' }}>
