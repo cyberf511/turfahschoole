@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, Profile, PaginatedResponse } from '@/types';
 
 export async function getAllUsers(
@@ -11,7 +11,7 @@ export async function getAllUsers(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || profile.role !== 'super_admin') {
     return { success: false, error: 'غير مصرح' };
@@ -66,7 +66,7 @@ export async function updateUserRole(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || profile.role !== 'super_admin') {
     return { success: false, error: 'غير مصرح - يحق فقط للمشرف العام تغيير الأدوار' };
@@ -95,7 +95,7 @@ export async function deleteUser(targetUserId: string): Promise<ActionResponse> 
     return { success: false, error: 'لا يمكنك حذف حسابك الخاص' };
   }
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || profile.role !== 'super_admin') {
     return { success: false, error: 'غير مصرح - يحق فقط للمشرف العام حذف الحسابات' };

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getOpportunities, toggleOpportunity, deleteOpportunity } from '@/actions/opportunities';
 import type { Opportunity } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -24,41 +25,24 @@ const Icons = {
 };
 
 export default function CoordinatorOpportunities() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Pagination & Stats
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState<any>(null);
-
-  // Modals & Toasts
   const [oppToDelete, setOppToDelete] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [page]);
+  const { data: res, error, mutate } = useSWR(['coordinator-opportunities', page], () => getOpportunities(false, page, 10));
 
-  const loadData = async () => {
-    setLoading(true);
-    const res = await getOpportunities(false, page, 10);
-    if (res.success) {
-      setOpportunities(res.data || []);
-      setTotalPages(res.totalPages || 1);
-      if (res.stats) setStats(res.stats);
-    }
-    setLoading(false);
-  };
+  const opportunities = res?.success ? res.data || [] : [];
+  const totalPages = res?.success ? res.totalPages || 1 : 1;
+  const stats = res?.success ? res.stats : null;
+  const loading = !res && !error;
 
   const handleToggle = async (id: string, current: boolean) => {
     setProcessingId(id);
     const res = await toggleOpportunity(id, !current);
     if (res.success) {
-      setOpportunities((prev) => prev.map((o) => o.id === id ? { ...o, is_active: !current } : o));
       setToast({ message: !current ? 'تم تفعيل الفرصة بنجاح' : 'تم إيقاف الفرصة بنجاح', type: 'success' });
-      loadData(); // refresh stats
+      mutate(); // refresh stats
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء تحديث الحالة', type: 'error' });
     }
@@ -75,7 +59,7 @@ export default function CoordinatorOpportunities() {
     if (res.success) {
       setToast({ message: 'تم حذف الفرصة بنجاح', type: 'success' });
       if (opportunities.length === 1 && page > 1) setPage(page - 1);
-      else loadData(); // refresh table & stats
+      else mutate(); // refresh table & stats
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء الحذف', type: 'error' });
     }

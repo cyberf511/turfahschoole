@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { encrypt, getLastThreeDigits } from '@/lib/encryption';
 import type { ActionResponse, ProfileFormData, Profile } from '@/types';
 
@@ -9,7 +9,7 @@ export async function getProfile(): Promise<ActionResponse<Profile>> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -49,7 +49,7 @@ export async function completeProfile(formData: ProfileFormData): Promise<Action
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
 
   const encryptedNationalId = encrypt(formData.national_id);
   const last3 = getLastThreeDigits(formData.national_id);
@@ -75,7 +75,7 @@ export async function updateProfile(data: Partial<ProfileFormData>): Promise<Act
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (data.full_name) updateData.full_name = data.full_name;

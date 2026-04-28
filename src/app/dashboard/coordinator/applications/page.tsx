@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getAllApplications, reviewApplication } from '@/actions/applications';
 import type { Application } from '@/types';
 import { APPLICATION_STATUS_LABELS } from '@/types';
@@ -42,14 +43,8 @@ const EDUCATION_LABELS: Record<string, string> = {
 };
 
 export default function CoordinatorApplications() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
-
-  // Pagination & Stats
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -57,29 +52,20 @@ export default function CoordinatorApplications() {
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
-  useEffect(() => {
-    loadApps();
-  }, [filter, page]);
+  const { data: res, error, mutate } = useSWR(['coordinator-applications', filter, page], () => getAllApplications(filter, page, 10));
 
-  const loadApps = async () => {
-    setLoading(true);
-    const res = await getAllApplications(filter, page, 10);
-    if (res.success) {
-      setApplications(res.data || []);
-      setTotalPages(res.totalPages || 1);
-      if (res.stats) setStats(res.stats);
-    }
-    setLoading(false);
-  };
+  const applications = res?.success ? res.data || [] : [];
+  const totalPages = res?.success ? res.totalPages || 1 : 1;
+  const stats = res?.success ? res.stats : null;
+  const loading = !res && !error;
 
   const handleApprove = async (id: string) => {
     setReviewingId(id);
     const res = await reviewApplication(id, 'approve');
     if (res.success) {
-      setApplications((prev) => prev.filter((a) => a.id !== id));
       setSelectedApp(null);
       setToast({ message: 'تم قبول الطلب بنجاح', type: 'success' });
-      loadApps();
+      mutate();
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء قبول الطلب', type: 'error' });
     }
@@ -92,10 +78,9 @@ export default function CoordinatorApplications() {
     setReviewingId(id);
     const res = await reviewApplication(id, 'reject', rejectReason);
     if (res.success) {
-      setApplications((prev) => prev.filter((a) => a.id !== id));
       setSelectedApp(null);
       setToast({ message: 'تم رفض الطلب بنجاح', type: 'success' });
-      loadApps();
+      mutate();
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء رفض الطلب', type: 'error' });
     }

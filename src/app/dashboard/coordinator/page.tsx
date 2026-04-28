@@ -1,23 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { Loading } from '@/components/ui/Loading';
 import { getCoordinatorStats } from '@/actions/stats';
 import Link from 'next/link';
 import { Plus, FileText, Clock, Award, ClipboardList } from 'lucide-react';
 
 export default function CoordinatorDashboard() {
-  const [stats, setStats] = useState({ opportunities: 0, pendingApps: 0, pendingCerts: 0, totalApps: 0 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getCoordinatorStats().then((res) => {
-      if (res.success && res.data) {
-        setStats(res.data);
-      }
-      setLoading(false);
-    });
-  }, []);
+  const { data: res, error } = useSWR('coordinator-stats', getCoordinatorStats);
+  
+  const stats = res?.success && res.data ? res.data : { opportunities: 0, pendingApps: 0, pendingCerts: 0, totalApps: 0 };
+  const loading = !res && !error;
 
   if (loading) return <Loading />;
 

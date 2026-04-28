@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, PaginatedResponse, Opportunity, OpportunityFormData } from '@/types';
 
 export async function getOpportunities(
@@ -12,7 +12,7 @@ export async function getOpportunities(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   let query = supabase.from('opportunities').select('*, creator:profiles!created_by(full_name, avatar_url)', { count: 'exact' });
 
   if (activeOnly) query = query.eq('is_active', true);
@@ -60,7 +60,7 @@ export async function getOpportunity(id: string): Promise<ActionResponse<Opportu
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('opportunities')
     .select('*, creator:profiles!created_by(full_name, avatar_url)')
@@ -75,7 +75,7 @@ export async function createOpportunity(formData: OpportunityFormData): Promise<
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
 
   // Verify coordinator or super_admin role
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
@@ -103,7 +103,7 @@ export async function updateOpportunity(id: string, formData: Partial<Opportunit
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -122,7 +122,7 @@ export async function toggleOpportunity(id: string, isActive: boolean): Promise<
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { error } = await supabase.from('opportunities').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) return { success: false, error: 'فشل في تحديث الحالة' };
   return { success: true };
@@ -132,7 +132,7 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };

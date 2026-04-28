@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
+import useSWR from 'swr';
 import { getMyApplications } from '@/actions/applications';
 import { getSignedUploadUrl, uploadCertificate } from '@/actions/certificates';
 import type { Application } from '@/types';
@@ -8,21 +9,15 @@ import { COMPLETION_STATUS_LABELS } from '@/types';
 import { Loading } from '@/components/ui/Loading';
 
 export default function StudentCertificates() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [message, setMessage] = useState({ text: '', type: '' });
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
-  useEffect(() => {
-    getMyApplications().then((res) => {
-      if (res.success) {
-        setApplications((res.data || []).filter((a) => a.status === 'approved' || a.completion_status));
-      }
-      setLoading(false);
-    });
-  }, []);
+  const { data: res, error, mutate } = useSWR('student-certificates', () => getMyApplications());
+
+  const applications = res?.success ? (res.data || []).filter((a) => a.status === 'approved' || a.completion_status) : [];
+  const loading = !res && !error;
 
   const handleFileSelect = (appId: string) => {
     setSelectedAppId(appId);
@@ -53,9 +48,7 @@ export default function StudentCertificates() {
       const certRes = await uploadCertificate(selectedAppId, urlRes.data.path);
       if (certRes.success) {
         setMessage({ text: 'تم رفع الشهادة بنجاح ✅', type: 'success' });
-        setApplications((prev) =>
-          prev.map((a) => a.id === selectedAppId ? { ...a, completion_status: 'completed_under_review' as const, certificate_url: urlRes.data!.path } : a)
-        );
+        mutate();
       } else {
         setMessage({ text: certRes.error || 'فشل', type: 'error' });
       }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getMyApplications } from '@/actions/applications';
 import type { Application } from '@/types';
 import { APPLICATION_STATUS_LABELS, COMPLETION_STATUS_LABELS } from '@/types';
@@ -9,16 +10,12 @@ import Link from 'next/link';
 import { Loading } from '@/components/ui/Loading';
 
 export default function StudentApplications() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    getMyApplications().then((res) => {
-      if (res.success) setApplications(res.data || []);
-      setLoading(false);
-    });
-  }, []);
+  const { data: res, error } = useSWR('student-applications', () => getMyApplications());
+
+  const applications = res?.success ? res.data || [] : [];
+  const loading = !res && !error;
 
   if (loading) {
     return <Loading />;

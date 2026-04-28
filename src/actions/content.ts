@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse } from '@/types';
 
 export interface SiteContent {
@@ -22,7 +22,7 @@ export interface SiteContent {
 // ---- PUBLIC (no auth needed) ----
 
 export async function getPublishedContent(): Promise<ActionResponse<SiteContent[]>> {
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('site_content')
     .select('*')
@@ -39,7 +39,7 @@ export async function getAllContent(): Promise<ActionResponse<SiteContent[]>> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -67,7 +67,7 @@ export async function createContent(input: {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -100,7 +100,7 @@ export async function updateContent(id: string, input: {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -119,7 +119,7 @@ export async function deleteContent(id: string): Promise<ActionResponse> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -134,7 +134,7 @@ export async function getContentUploadUrl(fileName: string): Promise<ActionRespo
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const filePath = `site-content/${Date.now()}-${fileName}`;
 
   const { data, error } = await supabase.storage
@@ -146,7 +146,7 @@ export async function getContentUploadUrl(fileName: string): Promise<ActionRespo
 }
 
 export async function getContentImageUrl(path: string): Promise<string> {
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data } = supabase.storage.from('site-content').getPublicUrl(path);
   return data.publicUrl;
 }

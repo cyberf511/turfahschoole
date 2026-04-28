@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, PaginatedResponse } from '@/types';
 import { createNotification } from './notifications';
 
@@ -9,7 +9,7 @@ export async function uploadCertificate(applicationId: string, certificatePath: 
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
 
   // Verify the application belongs to the user and is approved
   const { data: app } = await supabase
@@ -42,7 +42,7 @@ export async function getCertificatesForReview(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -89,7 +89,7 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -126,7 +126,7 @@ export async function getSignedUploadUrl(fileName: string): Promise<ActionRespon
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const filePath = `certificates/${user.id}/${Date.now()}-${fileName}`;
 
   const { data, error } = await supabase.storage
@@ -141,7 +141,7 @@ export async function getSignedDownloadUrl(path: string): Promise<ActionResponse
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase.storage
     .from('certificates')
     .createSignedUrl(path, 3600); // 1 hour

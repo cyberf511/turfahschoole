@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getCertificatesForReview, verifyCertificate, getSignedDownloadUrl } from '@/actions/certificates';
 import { formatDate } from '@/lib/utils';
 import { Pagination } from '@/components/ui/Pagination';
@@ -26,39 +27,24 @@ interface CertApp {
 }
 
 export default function CoordinatorCertificates() {
-  const [certs, setCerts] = useState<CertApp[]>([]);
-  const [loading, setLoading] = useState(true);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-
-  // Pagination & Stats
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [page]);
+  const { data: res, error, mutate } = useSWR(['coordinator-certificates', page], () => getCertificatesForReview(page, 10));
 
-  const loadData = async () => {
-    setLoading(true);
-    const res = await getCertificatesForReview(page, 10);
-    if (res.success) {
-      setCerts((res.data || []) as CertApp[]);
-      setTotalPages(res.totalPages || 1);
-      if (res.stats) setStats(res.stats);
-    }
-    setLoading(false);
-  };
+  const certs = res?.success ? (res.data as CertApp[]) || [] : [];
+  const totalPages = res?.success ? res.totalPages || 1 : 1;
+  const stats = res?.success ? res.stats : null;
+  const loading = !res && !error;
 
   const handleVerify = async (id: string) => {
     setVerifyingId(id);
     const res = await verifyCertificate(id);
     if (res.success) {
-      setCerts((prev) => prev.filter((c) => c.id !== id));
       setToast({ message: 'تم توثيق الشهادة بنجاح ✅', type: 'success' });
       if (certs.length === 1 && page > 1) setPage(page - 1);
-      else loadData();
+      else mutate();
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء التوثيق', type: 'error' });
     }

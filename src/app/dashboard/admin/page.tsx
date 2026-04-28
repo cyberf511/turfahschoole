@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { useUser } from '@clerk/nextjs';
 import { getAllUsers, updateUserRole, deleteUser } from '@/actions/users';
 import type { Profile } from '@/types';
@@ -31,41 +32,25 @@ const Icons = {
 
 export default function AdminPage() {
   const { user: currentUser } = useUser();
-  const [users, setUsers] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-
-  // Pagination & Stats
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [page]);
+  const { data: res, error, mutate } = useSWR(['admin-users', page], () => getAllUsers(page, 10));
 
-  const loadData = async () => {
-    setLoading(true);
-    const res = await getAllUsers(page, 10);
-    if (res.success) {
-      setUsers(res.data || []);
-      setTotalPages(res.totalPages || 1);
-      if (res.stats) setStats(res.stats);
-    }
-    setLoading(false);
-  };
+  const users = res?.success ? res.data || [] : [];
+  const totalPages = res?.success ? res.totalPages || 1 : 1;
+  const stats = res?.success ? res.stats : null;
+  const loading = !res && !error;
 
   const handleRoleChange = async (userId: string, newRole: 'student' | 'coordinator') => {
     setUpdatingId(userId);
     const res = await updateUserRole(userId, newRole);
     if (res.success) {
-      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
-      setToast({ message: 'تم تحديث صلاحية المستخدم بنجاح', type: 'success' });
-      loadData(); // Reload stats
+      mutate(); // Reload stats
     } else {
       setToast({ message: res.error || 'فشل التحديث', type: 'error' });
     }
@@ -82,7 +67,7 @@ export default function AdminPage() {
     if (res.success) {
       setToast({ message: 'تم حذف المستخدم نهائياً', type: 'success' });
       if (users.length === 1 && page > 1) setPage(page - 1);
-      else loadData(); // Reload stats & page
+      else mutate(); // Reload stats & page
     } else {
       setToast({ message: res.error || 'فشل الحذف', type: 'error' });
     }

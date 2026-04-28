@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, Notification, NotificationType } from '@/types';
 
 interface CreateNotificationInput {
@@ -13,7 +13,7 @@ interface CreateNotificationInput {
 }
 
 export async function createNotification(input: CreateNotificationInput): Promise<ActionResponse> {
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { error } = await supabase.from('notifications').insert({
     user_id: input.userId,
     title: input.title,
@@ -33,7 +33,7 @@ export async function getNotifications(): Promise<ActionResponse<Notification[]>
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('notifications')
     .select('*')
@@ -49,7 +49,7 @@ export async function getUnreadCount(): Promise<ActionResponse<number>> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { count, error } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
@@ -64,7 +64,7 @@ export async function markAsRead(notificationId: string): Promise<ActionResponse
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
@@ -79,7 +79,7 @@ export async function markAllAsRead(): Promise<ActionResponse> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })

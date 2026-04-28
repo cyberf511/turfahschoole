@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { getOpportunities } from '@/actions/opportunities';
 import { applyToOpportunity } from '@/actions/applications';
 import type { Opportunity } from '@/types';
@@ -8,17 +9,13 @@ import { formatDate } from '@/lib/utils';
 import { Loading } from '@/components/ui/Loading';
 
 export default function StudentOpportunities() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  useEffect(() => {
-    getOpportunities(true).then((res) => {
-      if (res.success) setOpportunities(res.data || []);
-      setLoading(false);
-    });
-  }, []);
+  const { data: res, error } = useSWR('student-opportunities', () => getOpportunities(true));
+  
+  const opportunities = res?.success ? (res.data as Opportunity[]) || [] : [];
+  const loading = !res && !error;
 
   const handleApply = async (id: string) => {
     setApplyingId(id);

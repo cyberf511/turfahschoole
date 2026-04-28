@@ -1,14 +1,14 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse } from '@/types';
 
 export async function getCoordinatorStats(): Promise<ActionResponse<{ opportunities: number, pendingApps: number, pendingCerts: number, totalApps: number }>> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };

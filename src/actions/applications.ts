@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, PaginatedResponse, Application } from '@/types';
 import { createNotification } from './notifications';
 import { sendEmail, emailApproved, emailRejected } from '@/lib/email';
@@ -10,7 +10,7 @@ export async function getMyApplications(): Promise<ActionResponse<Application[]>
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('applications')
     .select('*, opportunity:opportunities(title, location, hours, description)')
@@ -29,7 +29,7 @@ export async function getAllApplications(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -83,7 +83,7 @@ export async function applyToOpportunity(opportunityId: string): Promise<ActionR
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
 
   // Check if already applied
   const { data: existing } = await supabase
@@ -113,7 +113,7 @@ export async function reviewApplication(
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
@@ -167,7 +167,7 @@ export async function getStudentHours(): Promise<ActionResponse<number>> {
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = createAdminSupabase();
+  const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from('applications')
     .select('opportunity:opportunities(hours)')
