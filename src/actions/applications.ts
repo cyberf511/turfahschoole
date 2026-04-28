@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import type { ActionResponse, Application } from '@/types';
 import { createNotification } from './notifications';
+import { sendEmail, emailApproved, emailRejected } from '@/lib/email';
 
 export async function getMyApplications(): Promise<ActionResponse<Application[]>> {
   const user = await currentUser();
@@ -32,7 +33,7 @@ export async function getAllApplications(status?: string): Promise<ActionRespons
 
   let query = supabase
     .from('applications')
-    .select('*, opportunity:opportunities(title, location, hours), student:profiles!student_id(full_name, email, avatar_url)')
+    .select('*, opportunity:opportunities(title, location, hours), student:profiles!student_id(full_name, email, avatar_url, phone, education_level, national_id_last3)')
     .order('applied_at', { ascending: false });
 
   if (status && status !== 'all') query = query.eq('status', status);
@@ -97,7 +98,7 @@ export async function reviewApplication(
 
   if (error) return { success: false, error: 'فشل في مراجعة الطلب' };
 
-  // Send notification to student
+  // Send notification + email to student
   if (app) {
     const oppTitle = ((app.opportunity as unknown) as { title: string })?.title || '';
     const notifTitle = action === 'approve' ? 'تم قبول طلبك' : 'تم رفض طلبك';
@@ -112,6 +113,15 @@ export async function reviewApplication(
       type: action === 'approve' ? 'application_approved' : 'application_rejected',
       relatedApplicationId: applicationId,
     });
+
+    // Send email
+    const { data: studentProfile } = await supabase.from('profiles').select('email, full_name').eq('id', app.student_id).single();
+    if (studentProfile?.email) {
+      const template = action === 'approve'
+        ? emailApproved(studentProfile.full_name || 'طالبة', oppTitle)
+        : emailRejected(studentProfile.full_name || 'طالبة', oppTitle, reason);
+      sendEmail({ to: studentProfile.email, ...template }).catch(() => {});
+    }
   }
 
   return { success: true };
