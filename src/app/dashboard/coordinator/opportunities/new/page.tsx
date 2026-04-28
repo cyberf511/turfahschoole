@@ -44,7 +44,7 @@ export default function NewOpportunity() {
       <div className="section-header">
         <div>
           <h1 className="section-title">➕ إنشاء فرصة تطوعية جديدة</h1>
-          <p className="section-subtitle">أضف فرصة تطوعية جديدة للطلاب</p>
+          <p className="section-subtitle">أضف فرصة تطوعية جديدة للطالبات</p>
         </div>
       </div>
 
