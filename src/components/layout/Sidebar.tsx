@@ -125,8 +125,8 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
               <div className="sidebar__divider" />
               {!isCollapsed && <div className="sidebar__section">الإدارة</div>}
               <Link
-                href="/admin"
-                className={`sidebar__item ${pathname === '/admin' ? 'sidebar__item--active' : ''}`}
+                href="/dashboard/admin"
+                className={`sidebar__item ${pathname === '/dashboard/admin' ? 'sidebar__item--active' : ''}`}
                 onClick={onClose}
                 title={isCollapsed ? 'لوحة الإدارة' : undefined}
               >
