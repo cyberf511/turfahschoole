@@ -136,11 +136,6 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
               </div>
             )}
           </div>
-          {!isCollapsed && (
-            <Link href="/" className="sidebar__signout">
-              ← تسجيل خروج
-            </Link>
-          )}
         </div>
       </aside>
       {isOpen && <div className="sidebar-overlay" onClick={onClose} />}

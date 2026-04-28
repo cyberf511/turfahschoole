@@ -41,27 +41,21 @@ export function TopNav({ onMenuToggle, unreadCount = 0 }: TopNavProps) {
           </svg>
         </button>
 
-        {/* Search */}
-        <div className="topnav__search">
-          <svg className="topnav__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" placeholder="ابحث في المنصة..." className="topnav__search-input" />
+        {/* User info (Right side near sidebar) */}
+        <div className="topnav__user">
+          <div className="topnav__greeting-wrap">
+            <span className="topnav__greeting">مرحباً، {firstName}</span>
+            <span className="topnav__role-hint" title={email}>{email}</span>
+          </div>
         </div>
 
         <div className="topnav__spacer"></div>
 
-        {/* Actions Container */}
+        {/* Actions Container (Left side) */}
         <div className="topnav__actions">
-          {/* Theme toggle */}
-          <button className="topnav__btn theme-toggle" onClick={toggleTheme} aria-label="تبديل الثيم" title={theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'}>
-            {theme === 'dark' ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line></svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            )}
-          </button>
+
+
+          <div className="topnav__divider"></div>
 
           {/* Notifications */}
           <div className="notif-bell" ref={notifRef}>
@@ -85,15 +79,14 @@ export function TopNav({ onMenuToggle, unreadCount = 0 }: TopNavProps) {
             )}
           </div>
 
-          <div className="topnav__divider"></div>
-
-          {/* User info */}
-          <div className="topnav__user">
-            <div className="topnav__greeting-wrap">
-              <span className="topnav__greeting">مرحباً، {firstName}</span>
-              <span className="topnav__role-hint" title={email}>{email}</span>
-            </div>
-          </div>
+          {/* Theme toggle */}
+          <button className="topnav__btn theme-toggle" onClick={toggleTheme} aria-label="تبديل الثيم" title={theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'}>
+            {theme === 'dark' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            )}
+          </button>
         </div>
       </div>
     </header>

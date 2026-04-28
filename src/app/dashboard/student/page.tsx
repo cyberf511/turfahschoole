@@ -128,6 +128,10 @@ export default function StudentDashboard() {
       <div className="dash-progress-card animate-slide-up">
         <div className="dash-progress-card__header">
           <span className="dash-progress-card__title">تقدم ساعات التطوع</span>
+          <div className="dash-progress-card__target-inline">
+            <span className="dash-progress-card__target-lbl">الهدف الكلي:</span>
+            <span className="dash-progress-card__target-val">{targetHours} ساعة</span>
+          </div>
         </div>
         <div className="dash-progress-bar-wrap">
           <div className="dash-progress-bar">
@@ -139,10 +143,6 @@ export default function StudentDashboard() {
             <span>0</span>
             <span>{targetHours}</span>
           </div>
-        </div>
-        <div className="dash-progress-card__target">
-          <span className="dash-progress-card__target-val">{targetHours}</span>
-          <span className="dash-progress-card__target-lbl">الهدف الكلي<br />ساعة</span>
         </div>
         <p className="dash-progress-card__msg">✨ أنت على الطريق الصحيح! استمري في عطائك</p>
       </div>
