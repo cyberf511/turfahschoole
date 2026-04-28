@@ -50,3 +50,38 @@ export async function updateUserRole(
   if (error) return { success: false, error: 'فشل في تحديث الدور' };
   return { success: true };
 }
+
+export async function deleteUser(targetUserId: string): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  if (user.id === targetUserId) {
+    return { success: false, error: 'لا يمكنك حذف حسابك الخاص' };
+  }
+
+  const supabase = createAdminSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || profile.role !== 'super_admin') {
+    return { success: false, error: 'غير مصرح - يحق فقط للمشرف العام حذف الحسابات' };
+  }
+
+  try {
+    // 1. Delete from Clerk
+    const { clerkClient } = await import('@clerk/nextjs/server');
+    const client = await clerkClient();
+    await client.users.deleteUser(targetUserId);
+
+    // 2. Delete from Supabase
+    const { error } = await supabase.from('profiles').delete().eq('id', targetUserId);
+    
+    if (error) {
+      console.error('Error deleting from supabase:', error);
+      // Even if supabase fails, Clerk deleted them so they can't login anyway
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error deleting user:', err);
+    return { success: false, error: 'فشل في حذف المستخدم' };
+  }
+}
