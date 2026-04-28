@@ -282,7 +282,8 @@
 .landing-feature { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; text-align: center; transition: all var(--transition-fast); }
 [data-theme="light"] .landing-section--alt .landing-feature { background: var(--bg-tertiary); }
 .landing-feature:hover { border-color: var(--accent-primary); transform: translateY(-4px); box-shadow: var(--shadow-glow); }
-.landing-feature__icon { font-size: 2.5rem; margin-bottom: 16px; }
+.landing-feature__icon { font-size: 2.5rem; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; }
+.landing-feature__icon svg { width: 48px; height: 48px; }
 .landing-feature__title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
 .landing-feature__desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
 
