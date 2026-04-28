@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
+import useSWR from 'swr';
 import { getMyApplications, getStudentHours } from '@/actions/applications';
 import type { Application, Opportunity } from '@/types';
 import { APPLICATION_STATUS_LABELS, COMPLETION_STATUS_LABELS } from '@/types';
@@ -30,27 +30,30 @@ async function getAvailableOpportunities() {
   return getOpportunities(true);
 }
 
+const fetchStudentData = async () => {
+  const [appsRes, hoursRes, oppsRes] = await Promise.all([
+    getMyApplications(),
+    getStudentHours(),
+    getAvailableOpportunities(),
+  ]);
+  return {
+    applications: appsRes.success ? (appsRes.data as Application[]) || [] : [],
+    totalHours: hoursRes.success ? hoursRes.data || 0 : 0,
+    opportunities: oppsRes.success ? ((oppsRes.data as Opportunity[]) || []).slice(0, 3) : [],
+  };
+};
+
 export default function StudentDashboard() {
   const { user } = useUser();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [totalHours, setTotalHours] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { data, error, isLoading } = useSWR('student-dashboard-data', fetchStudentData, {
+    revalidateOnFocus: false,
+  });
 
-  useEffect(() => {
-    Promise.all([
-      getMyApplications(),
-      getStudentHours(),
-      getAvailableOpportunities(),
-    ]).then(([appsRes, hoursRes, oppsRes]) => {
-      if (appsRes.success) setApplications(appsRes.data || []);
-      if (hoursRes.success) setTotalHours(hoursRes.data || 0);
-      if (oppsRes.success) setOpportunities((oppsRes.data || []).slice(0, 3));
-      setLoading(false);
-    });
-  }, []);
+  if (isLoading || (!data && !error)) return <PageLoader />;
 
-  if (loading) return <PageLoader />;
+  const applications = data?.applications || [];
+  const opportunities = data?.opportunities || [];
+  const totalHours = data?.totalHours || 0;
 
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
   const approvedCount = applications.filter((a) => a.status === 'approved').length;
