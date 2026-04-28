@@ -193,9 +193,11 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* === FOOTER === */}
       <footer className="landing-footer">
-        <p>© {new Date().getFullYear()} ثانوية طرفة بنت عبدالعزيز — منصة العمل التطوعي</p>
+        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <span>منصة العمل التطوعي — ثانوية طرفة بنت عبدالعزيز</span>
+          <span dir="ltr">© {new Date().getFullYear()}</span>
+        </p>
       </footer>
     </div>
   );
