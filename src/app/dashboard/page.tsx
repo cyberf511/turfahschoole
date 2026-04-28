@@ -13,11 +13,19 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !profile.profile_completed) {
+  if (!profile) {
     redirect('/onboarding');
   }
 
-  if (profile.role === 'coordinator' || profile.role === 'super_admin') {
+  if (profile.role === 'super_admin') {
+    redirect('/dashboard/admin');
+  }
+
+  if (!profile.profile_completed) {
+    redirect('/onboarding');
+  }
+
+  if (profile.role === 'coordinator') {
     redirect('/dashboard/coordinator');
   }
 
