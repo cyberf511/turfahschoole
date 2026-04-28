@@ -56,7 +56,7 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
       <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${isCollapsed ? 'sidebar--collapsed' : ''}`}>
         {/* Header */}
         <div className="sidebar__header">
-          <div className="sidebar__logo-wrap">
+          <Link href="/" className="sidebar__logo-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="sidebar__logo-icon">
               <Icons.Cap />
             </div>
@@ -66,7 +66,7 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
                 <div className="sidebar__logo-sub">ثانوية طرفة بنت عبدالعزيز</div>
               </div>
             )}
-          </div>
+          </Link>
           <button
             className="sidebar__collapse-btn"
             onClick={onToggleCollapse}
