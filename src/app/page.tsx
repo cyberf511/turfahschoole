@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getPublishedContent, type SiteContent } from '@/actions/content';
 import { LandingClient } from '@/components/landing/LandingClient';
+import { LandingNav } from '@/components/landing/LandingNav';
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -19,6 +20,7 @@ export default async function LandingPage() {
 
   return (
     <div className="landing">
+      <LandingNav />
       {/* === HERO === */}
       <section className="landing-hero">
         {heroImages.length > 0 && (
@@ -168,7 +170,7 @@ export default async function LandingPage() {
 
       {/* === FOOTER === */}
       <footer className="landing-footer">
-        <p>© {new Date().getFullYear()} منصة التطوع الطلابي — جميع الحقوق محفوظة</p>
+        <p>© {new Date().getFullYear()} ثانوية طرفة بنت عبدالعزيز — منصة العمل التطوعي</p>
       </footer>
     </div>
   );
