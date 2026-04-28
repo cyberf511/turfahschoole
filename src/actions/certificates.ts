@@ -2,7 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import type { ActionResponse } from '@/types';
+import type { ActionResponse, PaginatedResponse } from '@/types';
 import { createNotification } from './notifications';
 
 export async function uploadCertificate(applicationId: string, certificatePath: string): Promise<ActionResponse> {
