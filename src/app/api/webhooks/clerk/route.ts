@@ -46,16 +46,15 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminSupabase();
-  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase() || '';
 
   if (evt.type === 'user.created') {
     const { id, email_addresses, first_name, last_name, image_url, username } = evt.data;
     const email = email_addresses?.[0]?.email_address || '';
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || username || null;
     
-    // Assign super_admin if email matches OR username is exactly 'admin', 'super_admin', or 'superadmin'
+    // Assign super_admin if username is exactly 'admin', 'super_admin', or 'superadmin'
     const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
-    const userRole = (email.toLowerCase() === superAdminEmail || allowedAdmins.includes(username || '')) ? 'super_admin' : 'student';
+    const userRole = allowedAdmins.includes(username?.toLowerCase() || '') ? 'super_admin' : 'student';
 
     const { error } = await supabase.from('profiles').upsert({
       id,
