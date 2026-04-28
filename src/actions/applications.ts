@@ -48,17 +48,25 @@ export async function getAllApplications(
 
   const { data, count, error } = await query;
   
-  // Fetch stats
-  const { data: allData, error: statsError } = await supabase.from('applications').select('status');
-  let stats = null;
-  if (!statsError && allData) {
-    stats = {
-      total: allData.length,
-      pending: allData.filter(a => a.status === 'pending').length,
-      approved: allData.filter(a => a.status === 'approved').length,
-      rejected: allData.filter(a => a.status === 'rejected').length
-    };
-  }
+  // Fetch stats using fast exact counts
+  const [
+    { count: totalApps },
+    { count: pendingApps },
+    { count: approvedApps },
+    { count: rejectedApps }
+  ] = await Promise.all([
+    supabase.from('applications').select('*', { count: 'exact', head: true }),
+    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected')
+  ]);
+
+  const stats = {
+    total: totalApps || 0,
+    pending: pendingApps || 0,
+    approved: approvedApps || 0,
+    rejected: rejectedApps || 0
+  };
 
   if (error) return { success: false, error: 'فشل في تحميل الطلبات' };
   return { 

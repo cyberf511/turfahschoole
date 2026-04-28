@@ -24,17 +24,25 @@ export async function getOpportunities(
 
   const { data, count, error } = await query;
   
-  // Fetch stats for the opportunities dashboard
-  const { data: allData, error: statsError } = await supabase.from('opportunities').select('is_active, hours');
-  let stats = null;
-  if (!statsError && allData) {
-    stats = {
-      total: allData.length,
-      active: allData.filter(o => o.is_active).length,
-      inactive: allData.filter(o => !o.is_active).length,
-      totalHours: allData.reduce((acc, curr) => acc + (curr.hours || 0), 0)
-    };
-  }
+  // Fetch stats for the opportunities dashboard using exact counts
+  const [
+    { count: totalCount },
+    { count: activeCount },
+    { count: inactiveCount },
+    { data: hoursData }
+  ] = await Promise.all([
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }),
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }).eq('is_active', false),
+    supabase.from('opportunities').select('hours')
+  ]);
+
+  const stats = {
+    total: totalCount || 0,
+    active: activeCount || 0,
+    inactive: inactiveCount || 0,
+    totalHours: (hoursData || []).reduce((acc, curr) => acc + (curr.hours || 0), 0)
+  };
 
   if (error) return { success: false, error: 'فشل في تحميل الفرص' };
   

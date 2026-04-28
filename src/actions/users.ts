@@ -28,17 +28,25 @@ export async function getAllUsers(
 
   const { data, count, error } = await query;
   
-  // Stats
-  const { data: allData, error: statsError } = await supabase.from('profiles').select('role');
-  let stats = null;
-  if (!statsError && allData) {
-    stats = {
-      total: allData.length,
-      students: allData.filter(u => u.role === 'student').length,
-      coordinators: allData.filter(u => u.role === 'coordinator').length,
-      admins: allData.filter(u => u.role === 'super_admin').length
-    };
-  }
+  // Stats using exact counts
+  const [
+    { count: totalCount },
+    { count: studentsCount },
+    { count: coordinatorsCount },
+    { count: adminsCount }
+  ] = await Promise.all([
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'coordinator'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'super_admin')
+  ]);
+
+  const stats = {
+    total: totalCount || 0,
+    students: studentsCount || 0,
+    coordinators: coordinatorsCount || 0,
+    admins: adminsCount || 0
+  };
 
   if (error) return { success: false, error: 'فشل في تحميل المستخدمين' };
   return { 
