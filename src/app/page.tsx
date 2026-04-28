@@ -57,9 +57,6 @@ export default async function LandingPage() {
             <Link href="/sign-in" className="btn btn--primary btn--lg" id="hero-signin">
               <Icons.login /> تسجيل الدخول
             </Link>
-            <Link href="/sign-up" className="btn btn--secondary btn--lg" id="hero-signup">
-              <Icons.sparkles /> إنشاء حساب جديد
-            </Link>
           </div>
         </div>
       </section>
