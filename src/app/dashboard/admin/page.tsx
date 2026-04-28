@@ -19,7 +19,8 @@ const Icons = {
   upArrow: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>,
   downArrow: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>,
   check: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-  trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+  trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>,
+  alertCircle: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
 };
 
 export default function AdminPage() {
@@ -29,6 +30,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -48,22 +50,26 @@ export default function AdminPage() {
       setTimeout(() => setMessage(''), 3000);
     } else {
       setMessage(res.error || 'فشل التحديث');
+      setTimeout(() => setMessage(''), 3000);
     }
     setUpdatingId(null);
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذا المستخدم نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-
-    setDeletingId(userId);
+  const executeDelete = async () => {
+    if (!userToDelete) return;
+    
+    setDeletingId(userToDelete);
+    setUserToDelete(null); // Close modal
     setMessage('');
-    const res = await deleteUser(userId);
+    
+    const res = await deleteUser(userToDelete);
     if (res.success) {
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      setMessage('تم حذف المستخدم بنجاح');
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete));
+      setMessage('تم حذف المستخدم نهائياً');
       setTimeout(() => setMessage(''), 3000);
     } else {
       setMessage(res.error || 'فشل الحذف');
+      setTimeout(() => setMessage(''), 3000);
     }
     setDeletingId(null);
   };
@@ -76,7 +82,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 0' }} className="animate-slide-up">
-
+      
       {/* Header Section */}
       <div className="dash-card-wrap__header" style={{ marginBottom: '32px', alignItems: 'center' }}>
         <div>
@@ -90,10 +96,69 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Premium Custom Toast */}
       {message && (
-        <div className="toast toast--success" style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Icons.check />
+        <div className="animate-slide-up" style={{
+          position: 'fixed',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          background: message.includes('فشل') ? 'var(--danger)' : 'var(--success)',
+          color: '#fff',
+          padding: '14px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+          fontWeight: 600,
+          fontSize: '0.95rem',
+          backdropFilter: 'blur(10px)'
+        }}>
+          {message.includes('فشل') ? <Icons.alertCircle /> : <Icons.check />}
           {message}
+        </div>
+      )}
+
+      {/* Premium Custom Modal for Delete Confirmation */}
+      {userToDelete && (
+        <div className="animate-fade-in" style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px'
+        }}>
+          <div className="card animate-scale-in" style={{ maxWidth: '400px', width: '100%', padding: '32px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--danger-soft)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <Icons.trash />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px', color: 'var(--text-primary)' }}>تأكيد الحذف النهائي</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.6 }}>
+              هل أنت متأكد من رغبتك في حذف هذا المستخدم؟ سيتم مسح كافة بياناته نهائياً ولا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                className="btn btn--secondary" 
+                onClick={() => setUserToDelete(null)}
+                style={{ flex: 1 }}
+              >
+                تراجع
+              </button>
+              <button 
+                className="btn btn--primary" 
+                onClick={executeDelete}
+                style={{ flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)' }}
+              >
+                نعم، احذف
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -173,7 +238,7 @@ export default function AdminPage() {
                       {currentUser?.id !== user.id && (
                         <button
                           className="btn btn--secondary btn--sm"
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => setUserToDelete(user.id)}
                           disabled={deletingId === user.id || updatingId === user.id}
                           title="حذف المستخدم"
                           style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'transparent' }}

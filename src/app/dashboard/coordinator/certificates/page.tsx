@@ -49,7 +49,7 @@ export default function CoordinatorCertificates() {
       <div className="section-header">
         <div>
           <h1 className="section-title">✅ مراجعة الشهادات</h1>
-          <p className="section-subtitle">مراجعة وتوثيق شهادات الإنجاز المرفوعة من الطلاب</p>
+          <p className="section-subtitle">مراجعة وتوثيق شهادات الإنجاز المرفوعة من الطالبات</p>
         </div>
       </div>
 
