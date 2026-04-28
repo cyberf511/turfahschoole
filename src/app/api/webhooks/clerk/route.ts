@@ -11,6 +11,7 @@ interface WebhookEvent {
     first_name?: string;
     last_name?: string;
     image_url?: string;
+    username?: string;
   };
 }
 
@@ -45,20 +46,22 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminSupabase();
-  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase();
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase() || '';
 
   if (evt.type === 'user.created') {
-    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
-    const email = email_addresses[0]?.email_address || '';
-    const fullName = [first_name, last_name].filter(Boolean).join(' ') || null;
-    const role = email.toLowerCase() === superAdminEmail ? 'super_admin' : 'student';
+    const { id, email_addresses, first_name, last_name, image_url, username } = evt.data;
+    const email = email_addresses?.[0]?.email_address || '';
+    const fullName = [first_name, last_name].filter(Boolean).join(' ') || username || null;
+    
+    // Assign super_admin if email matches OR username is exactly 'admin' or 'super_admin'
+    const userRole = (email.toLowerCase() === superAdminEmail || username === 'admin' || username === 'super_admin') ? 'super_admin' : 'student';
 
     const { error } = await supabase.from('profiles').upsert({
       id,
       email,
       full_name: fullName,
       avatar_url: image_url || null,
-      role,
+      role: userRole,
       profile_completed: false,
     }, { onConflict: 'id' });
 
