@@ -6,7 +6,23 @@ import { getMyApplications, getStudentHours } from '@/actions/applications';
 import type { Application, Opportunity } from '@/types';
 import { APPLICATION_STATUS_LABELS, COMPLETION_STATUS_LABELS } from '@/types';
 import Link from 'next/link';
-import { DashboardSkeleton } from '@/components/ui/Loaders';
+import { PageLoader } from '@/components/ui/Loaders';
+
+const Icons = {
+  clock: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  clipboard: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
+  check: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  x: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
+  barChart: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>,
+  search: () => <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  target: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  mapPin: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  clockSmall: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  clockMed: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  clipboardMed: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
+  checkMed: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  xMed: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
+};
 
 // For fetching available opportunities
 async function getAvailableOpportunities() {
@@ -34,7 +50,7 @@ export default function StudentDashboard() {
     });
   }, []);
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading) return <PageLoader />;
 
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
   const approvedCount = applications.filter((a) => a.status === 'approved').length;
@@ -58,7 +74,7 @@ export default function StudentDashboard() {
       <div className="dash-stats stagger-children">
         <div className="dash-stat-card dash-stat-card--blue animate-slide-up">
           <div className="dash-stat-card__top">
-            <div className="dash-stat-card__icon">⏱️</div>
+            <div className="dash-stat-card__icon"><Icons.clock /></div>
             <span className="dash-stat-card__title">إجمالي الساعات</span>
           </div>
           <div className="dash-stat-card__value">{totalHours}</div>
@@ -71,7 +87,7 @@ export default function StudentDashboard() {
         </div>
         <div className="dash-stat-card dash-stat-card--amber animate-slide-up">
           <div className="dash-stat-card__top">
-            <div className="dash-stat-card__icon">📋</div>
+            <div className="dash-stat-card__icon"><Icons.clipboard /></div>
             <span className="dash-stat-card__title">الطلبات قيد المعالجة</span>
           </div>
           <div className="dash-stat-card__value">{pendingCount}</div>
@@ -84,7 +100,7 @@ export default function StudentDashboard() {
         </div>
         <div className="dash-stat-card dash-stat-card--green animate-slide-up">
           <div className="dash-stat-card__top">
-            <div className="dash-stat-card__icon">✅</div>
+            <div className="dash-stat-card__icon"><Icons.check /></div>
             <span className="dash-stat-card__title">الشهادات المعتمدة</span>
           </div>
           <div className="dash-stat-card__value">{verifiedCount}</div>
@@ -98,7 +114,7 @@ export default function StudentDashboard() {
         {/* Ring card */}
         <div className="dash-stat-card dash-stat-card--ring animate-slide-up">
           <div className="dash-stat-card__top">
-            <div className="dash-stat-card__icon">📊</div>
+            <div className="dash-stat-card__icon"><Icons.barChart /></div>
             <span className="dash-stat-card__title">تقدم الساعات</span>
           </div>
           <div className="dash-stat-card__ring-wrap">
@@ -157,7 +173,7 @@ export default function StudentDashboard() {
           </div>
           {opportunities.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state__icon">🔍</div>
+              <div className="empty-state__icon" style={{ color: 'var(--text-tertiary)' }}><Icons.search /></div>
               <div className="empty-state__title">لا توجد فرص حالياً</div>
               <div className="empty-state__desc">سيتم إضافة فرص جديدة قريباً</div>
             </div>
@@ -166,15 +182,15 @@ export default function StudentDashboard() {
               {opportunities.map((opp) => (
                 <div key={opp.id} className="dash-opp-card hover-lift">
                   <div className="dash-opp-card__img">
-                    <div className="dash-opp-card__img-placeholder">🎯</div>
+                    <div className="dash-opp-card__img-placeholder" style={{ color: 'var(--accent-primary)' }}><Icons.target /></div>
                     <span className="dash-opp-card__category">تطوع</span>
                   </div>
                   <div className="dash-opp-card__body">
                     <h3 className="dash-opp-card__title">{opp.title}</h3>
                     <p className="dash-opp-card__desc">{opp.description}</p>
                     <div className="dash-opp-card__meta">
-                      <span>⏱️ {opp.hours} ساعات</span>
-                      <span>📍 {opp.location || 'المدرسة'}</span>
+                      <span><Icons.clockSmall /> {opp.hours} ساعات</span>
+                      <span><Icons.mapPin /> {opp.location || 'المدرسة'}</span>
                     </div>
                     <Link href="/dashboard/student/opportunities" className="btn btn--primary btn--sm btn--full">
                       تقديم الآن
@@ -194,18 +210,18 @@ export default function StudentDashboard() {
           </div>
           {recentApps.length === 0 ? (
             <div className="empty-state" style={{ padding: '40px 16px' }}>
-              <div className="empty-state__icon">📋</div>
+              <div className="empty-state__icon" style={{ color: 'var(--text-tertiary)' }}><Icons.clipboard /></div>
               <div className="empty-state__title">لا توجد أنشطة</div>
             </div>
           ) : (
             <div className="dash-activity-list">
               {recentApps.map((app) => {
                 const opp = (app.opportunity as unknown) as { title?: string; hours?: number } | undefined;
-                let icon = '📋';
+                let icon = <Icons.clipboardMed />;
                 let colorClass = 'dash-activity--amber';
-                if (app.completion_status === 'verified') { icon = '✅'; colorClass = 'dash-activity--green'; }
-                else if (app.status === 'approved') { icon = '✅'; colorClass = 'dash-activity--green'; }
-                else if (app.status === 'rejected') { icon = '❌'; colorClass = 'dash-activity--red'; }
+                if (app.completion_status === 'verified') { icon = <Icons.checkMed />; colorClass = 'dash-activity--green'; }
+                else if (app.status === 'approved') { icon = <Icons.checkMed />; colorClass = 'dash-activity--green'; }
+                else if (app.status === 'rejected') { icon = <Icons.xMed />; colorClass = 'dash-activity--red'; }
 
                 const statusText = app.completion_status
                   ? COMPLETION_STATUS_LABELS[app.completion_status]
