@@ -8,7 +8,9 @@ import type { Profile } from '@/types';
 interface SidebarProps {
   profile: Profile | null;
   isOpen: boolean;
+  isCollapsed: boolean;
   onClose: () => void;
+  onToggleCollapse: () => void;
 }
 
 const studentNav = [
@@ -30,30 +32,40 @@ const commonNav = [
   { href: '/notifications', icon: '🔔', label: 'الإشعارات' },
 ];
 
-export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const role = profile?.role || 'student';
   const navItems = role === 'coordinator' || role === 'super_admin' ? coordinatorNav : studentNav;
-  const roleLabel = role === 'coordinator' ? 'المنسقة' : role === 'super_admin' ? 'مشرفة عامة' : 'الطالبات';
   const sectionLabel = role === 'coordinator' || role === 'super_admin' ? 'المنسقة' : 'الطالبات';
+  const roleLabel = role === 'coordinator' ? 'منسقة' : role === 'super_admin' ? 'مشرفة عامة' : 'طالبة';
 
   return (
     <>
-      <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
-        {/* Logo */}
+      <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${isCollapsed ? 'sidebar--collapsed' : ''}`}>
+        {/* Header */}
         <div className="sidebar__header">
           <div className="sidebar__logo-wrap">
             <div className="sidebar__logo-icon">🎓</div>
-            <div>
-              <div className="sidebar__logo-text">منصة التطوع</div>
-              <div className="sidebar__logo-sub">ثانوية طرفة بنت عبدالعزيز</div>
-            </div>
+            {!isCollapsed && (
+              <div className="sidebar__logo-info">
+                <div className="sidebar__logo-text">منصة التطوع</div>
+                <div className="sidebar__logo-sub">ثانوية طرفة بنت عبدالعزيز</div>
+              </div>
+            )}
           </div>
+          <button
+            className="sidebar__collapse-btn"
+            onClick={onToggleCollapse}
+            aria-label={isCollapsed ? 'توسيع' : 'تصغير'}
+            title={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
+          >
+            {isCollapsed ? '◀' : '▶'}
+          </button>
         </div>
 
+        {/* Navigation */}
         <nav className="sidebar__nav">
-          {/* Section label */}
-          <div className="sidebar__section">{sectionLabel}</div>
+          {!isCollapsed && <div className="sidebar__section">{sectionLabel}</div>}
 
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -63,16 +75,17 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
                 href={item.href}
                 className={`sidebar__item ${isActive ? 'sidebar__item--active' : ''}`}
                 onClick={onClose}
+                title={isCollapsed ? item.label : undefined}
               >
                 <span className="sidebar__item-icon">{item.icon}</span>
-                <span className="sidebar__item-label">{item.label}</span>
+                {!isCollapsed && <span className="sidebar__item-label">{item.label}</span>}
                 {isActive && <span className="sidebar__item-indicator" />}
               </Link>
             );
           })}
 
-          {/* Common nav */}
           <div className="sidebar__divider" />
+
           {commonNav.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -81,9 +94,10 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
                 href={item.href}
                 className={`sidebar__item ${isActive ? 'sidebar__item--active' : ''}`}
                 onClick={onClose}
+                title={isCollapsed ? item.label : undefined}
               >
                 <span className="sidebar__item-icon">{item.icon}</span>
-                <span className="sidebar__item-label">{item.label}</span>
+                {!isCollapsed && <span className="sidebar__item-label">{item.label}</span>}
               </Link>
             );
           })}
@@ -91,34 +105,42 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
           {role === 'super_admin' && (
             <>
               <div className="sidebar__divider" />
-              <div className="sidebar__section">الإدارة</div>
+              {!isCollapsed && <div className="sidebar__section">الإدارة</div>}
               <Link
                 href="/admin"
                 className={`sidebar__item ${pathname === '/admin' ? 'sidebar__item--active' : ''}`}
                 onClick={onClose}
+                title={isCollapsed ? 'لوحة الإدارة' : undefined}
               >
                 <span className="sidebar__item-icon">🔒</span>
-                <span className="sidebar__item-label">لوحة الإدارة</span>
+                {!isCollapsed && <span className="sidebar__item-label">لوحة الإدارة</span>}
               </Link>
             </>
           )}
         </nav>
 
-        {/* User footer */}
+        {/* Footer */}
         <div className="sidebar__footer">
           <div className="sidebar__user">
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: { width: '36px', height: '36px' },
+                  avatarBox: { width: '34px', height: '34px' },
                 },
               }}
             />
-            <div className="sidebar__user-info">
-              <div className="sidebar__user-name">{profile?.full_name || 'مستخدم'}</div>
-              <div className="sidebar__user-role">{roleLabel}</div>
-            </div>
+            {!isCollapsed && (
+              <div className="sidebar__user-info">
+                <div className="sidebar__user-name">{profile?.full_name || 'مستخدم'}</div>
+                <div className="sidebar__user-role">{roleLabel}</div>
+              </div>
+            )}
           </div>
+          {!isCollapsed && (
+            <Link href="/" className="sidebar__signout">
+              ← تسجيل خروج
+            </Link>
+          )}
         </div>
       </aside>
       {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
