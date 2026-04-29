@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { getAllApplications, reviewApplication } from '@/actions/applications';
 import type { Application } from '@/types';
@@ -40,6 +40,53 @@ const EDUCATION_LABELS: Record<string, string> = {
   first_secondary: 'أولى ثانوي',
   second_secondary: 'ثانية ثانوي',
   third_secondary: 'ثالثة ثانوي',
+};
+
+const PhoneReveal = ({ phone }: { phone?: string }) => {
+  const [revealed, setRevealed] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+
+  useEffect(() => {
+    if (revealed) {
+      setTimeLeft(60);
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setRevealed(false);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [revealed]);
+
+  if (!phone) return <span style={{ direction: 'ltr' }}>غير محدد</span>;
+
+  if (revealed) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', direction: 'ltr' }}>
+        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{phone}</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 'bold' }}>({timeLeft}s)</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', direction: 'ltr', justifyContent: 'flex-end' }}>
+      <button 
+        onClick={(e) => { e.stopPropagation(); setRevealed(true); }}
+        className="btn btn--sm" 
+        style={{ padding: '2px 6px', fontSize: '0.8rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}
+        title="إظهار الرقم"
+      >
+        👁️ إظهار
+      </button>
+      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>******{phone.slice(-4)}</span>
+    </div>
+  );
 };
 
 export default function CoordinatorApplications() {
@@ -243,7 +290,11 @@ export default function CoordinatorApplications() {
                           </button>
                           <button
                             className="btn btn--sm btn--secondary"
-                            onClick={() => setShowRejectModal(app.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowRejectModal(app.id);
+                              setRejectReason(`نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`);
+                            }}
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                           >
                             <Icons.x /> رفض
@@ -299,8 +350,8 @@ export default function CoordinatorApplications() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="card" style={{ padding: '12px', background: 'var(--bg-secondary)', border: 'none' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '4px' }}>📱 الجوال</div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem', direction: 'ltr', textAlign: 'right' }}>
-                      {student?.phone ? `******${student.phone.slice(-4)}` : 'غير محدد'}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <PhoneReveal phone={student?.phone} />
                     </div>
                   </div>
                   <div className="card" style={{ padding: '12px', background: 'var(--bg-secondary)', border: 'none' }}>
@@ -354,7 +405,11 @@ export default function CoordinatorApplications() {
                 <div className="modal__footer" style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                   <button
                     className="btn btn--secondary"
-                    onClick={() => { setShowRejectModal(selectedApp.id); setSelectedApp(null); }}
+                    onClick={() => { 
+                      setShowRejectModal(selectedApp.id); 
+                      setRejectReason(`نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`);
+                      setSelectedApp(null); 
+                    }}
                     style={{ flex: 1, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                   >
                     رفض الطلب

@@ -56,13 +56,38 @@ export async function POST(req: Request) {
     const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
     const userRole = allowedAdmins.includes(username?.toLowerCase() || '') ? 'super_admin' : 'student';
 
+    // 1. Check if the user is pre-registered by the coordinator
+    const { data: preReg } = await supabase
+      .from('pre_registered_students')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    // 2. Decide profile data
+    let profileCompleted = false;
+    let finalFullName = fullName;
+    let nationalId = null;
+    let phone = null;
+    let educationLevel = null;
+
+    if (preReg) {
+      profileCompleted = true;
+      finalFullName = preReg.full_name || fullName;
+      nationalId = preReg.national_id;
+      phone = preReg.phone;
+      educationLevel = preReg.education_level;
+    }
+
     const { error } = await supabase.from('profiles').upsert({
       id,
       email,
-      full_name: fullName,
+      full_name: finalFullName,
       avatar_url: image_url || null,
       role: userRole,
-      profile_completed: false,
+      national_id: nationalId,
+      phone: phone,
+      education_level: educationLevel,
+      profile_completed: profileCompleted,
     }, { onConflict: 'id' });
 
     if (error) {

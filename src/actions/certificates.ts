@@ -153,3 +153,41 @@ export async function getSignedDownloadUrl(path: string): Promise<ActionResponse
   if (error) return { success: false, error: 'فشل في إنشاء رابط التحميل' };
   return { success: true, data: data.signedUrl };
 }
+
+export async function createExternalCertificateApplication(hours: number, title: string = 'منصة التطوع'): Promise<ActionResponse<string>> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+
+  // 1. Create a hidden custom opportunity for these specific hours
+  const { data: opp, error: oppError } = await supabase
+    .from('opportunities')
+    .insert({
+      title,
+      description: 'شهادة خارجية تم رفعها من قبل الطالبة للاعتماد',
+      location: 'جهة خارجية',
+      hours: hours,
+      is_active: false, // Hidden from regular list
+      created_by: user.id,
+    })
+    .select('id')
+    .single();
+
+  if (oppError || !opp) return { success: false, error: 'فشل في إنشاء سجل الشهادة الخارجية' };
+
+  // 2. Create a pending application for this opportunity
+  const { data: app, error: appError } = await supabase
+    .from('applications')
+    .insert({
+      opportunity_id: opp.id,
+      student_id: user.id,
+      status: 'pending'
+    })
+    .select('id')
+    .single();
+
+  if (appError || !app) return { success: false, error: 'فشل في تقديم الطلب' };
+
+  return { success: true, data: app.id };
+}

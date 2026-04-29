@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import useSWR from 'swr';
 import { getMyApplications } from '@/actions/applications';
-import { getSignedUploadUrl, uploadCertificate } from '@/actions/certificates';
+import { getSignedUploadUrl, uploadCertificate, createExternalCertificateApplication } from '@/actions/certificates';
 import type { Application } from '@/types';
 import { COMPLETION_STATUS_LABELS } from '@/types';
 import { Loading } from '@/components/ui/Loading';
@@ -13,6 +13,9 @@ export default function StudentCertificates() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+  const [showExternalModal, setShowExternalModal] = useState(false);
+  const [externalHours, setExternalHours] = useState('');
+  const [isCreatingExternal, setIsCreatingExternal] = useState(false);
 
   const { data: res, error, mutate } = useSWR('student-certificates', () => getMyApplications());
 
@@ -22,6 +25,26 @@ export default function StudentCertificates() {
   const handleFileSelect = (appId: string) => {
     setSelectedAppId(appId);
     fileRef.current?.click();
+  };
+
+  const handleExternalSubmit = async () => {
+    const hours = parseInt(externalHours);
+    if (isNaN(hours) || hours <= 0) {
+      setMessage({ text: 'الرجاء إدخال عدد ساعات صحيح', type: 'error' });
+      return;
+    }
+    setIsCreatingExternal(true);
+    const res = await createExternalCertificateApplication(hours);
+    setIsCreatingExternal(false);
+    
+    if (res.success && res.data) {
+      setShowExternalModal(false);
+      setExternalHours('');
+      // Trigger file selection for the newly created external app
+      handleFileSelect(res.data);
+    } else {
+      setMessage({ text: res.error || 'فشل في إنشاء الطلب', type: 'error' });
+    }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,11 +88,18 @@ export default function StudentCertificates() {
 
   return (
     <div className="animate-slide-up">
-      <div className="section-header">
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 className="section-title">📄 شهاداتي</h1>
           <p className="section-subtitle">ارفع شهادات الإنجاز لتوثيقها</p>
         </div>
+        <button 
+          className="btn btn--primary" 
+          onClick={() => setShowExternalModal(true)}
+          style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+        >
+          + إضافة شهادة منصة التطوع
+        </button>
       </div>
 
       <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleUpload} />
@@ -138,6 +168,47 @@ export default function StudentCertificates() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* External Certificate Modal */}
+      {showExternalModal && (
+        <div className="modal-overlay" onClick={() => setShowExternalModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3 className="modal__title">إضافة شهادة من منصة التطوع</h3>
+              <button className="modal__close" onClick={() => setShowExternalModal(false)}>✕</button>
+            </div>
+            <div className="modal__body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>
+                أدخلي عدد الساعات التطوعية المكتوبة في الشهادة ليتم إضافتها إلى رصيدك بعد المراجعة.
+              </p>
+              <div className="form-group">
+                <label className="form-label">عدد الساعات التطوعية</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  placeholder="مثال: 10" 
+                  value={externalHours}
+                  onChange={(e) => setExternalHours(e.target.value)}
+                  min="1"
+                />
+              </div>
+              <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+                <button 
+                  className="btn btn--primary" 
+                  style={{ flex: 1 }} 
+                  onClick={handleExternalSubmit}
+                  disabled={isCreatingExternal}
+                >
+                  {isCreatingExternal ? 'جاري التحضير...' : 'متابعة لاختيار الملف'}
+                </button>
+                <button className="btn btn--secondary" onClick={() => setShowExternalModal(false)}>
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
