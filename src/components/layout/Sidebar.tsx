@@ -146,6 +146,14 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
                 elements: {
                   avatarBox: { width: '34px', height: '34px' },
                 },
+                variables: {
+                  colorBackground: 'var(--bg-primary)',
+                  colorText: 'var(--text-primary)',
+                  colorPrimary: 'var(--accent-primary)',
+                  colorInputBackground: 'var(--bg-secondary)',
+                  colorInputText: 'var(--text-primary)',
+                  colorTextSecondary: 'var(--text-secondary)',
+                }
               }}
             />
             {!isCollapsed && (
