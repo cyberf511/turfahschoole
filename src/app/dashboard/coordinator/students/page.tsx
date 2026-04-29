@@ -70,6 +70,25 @@ export default function CoordinatorStudents() {
     e.target.value = ''; // Reset
   };
 
+  const downloadTemplate = () => {
+    const headers = ['email', 'full_name', 'national_id', 'phone', 'education_level'];
+    const sample = ['student@example.com', 'نورة محمد', '1122334455', '0500000000', 'first_secondary'];
+    
+    const csvContent = [
+      headers.join(','),
+      sample.join(',')
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF for Excel UTF-8 BOM
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'قالب_تسجيل_الطالبات.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -79,10 +98,15 @@ export default function CoordinatorStudents() {
           <h1 className="section-title">👥 إدارة الطالبات (التسجيل المسبق)</h1>
           <p className="section-subtitle">رفع قائمة الطالبات لتخطي مرحلة التسجيل (Onboarding)</p>
         </div>
-        <label className="btn btn--primary" style={{ cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {uploading ? 'جاري الرفع...' : '+ رفع ملف CSV'}
-          <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: 'none' }} disabled={uploading} />
-        </label>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button className="btn btn--secondary" onClick={downloadTemplate} style={{ fontSize: '0.85rem' }}>
+            ⬇️ تحميل قالب CSV
+          </button>
+          <label className="btn btn--primary" style={{ cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {uploading ? 'جاري الرفع...' : '+ رفع ملف CSV'}
+            <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: 'none' }} disabled={uploading} />
+          </label>
+        </div>
       </div>
 
       {message.text && (
