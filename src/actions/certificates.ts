@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import type { ActionResponse, PaginatedResponse } from '@/types';
 import { createNotification } from './notifications';
 
@@ -126,18 +127,22 @@ export async function getSignedUploadUrl(fileName: string): Promise<ActionRespon
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = await createServerSupabase();
+  // Use admin client to bypass Storage RLS since we already authenticated the user via Clerk
+  const adminSupabase = createAdminSupabase();
   
   // Sanitize filename to avoid Signed URL and RLS extension policy mismatch due to spaces/arabic characters
   const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
   const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '').replace(`.${extension}`, '') || 'cert';
-  const filePath = `certificates/${user.id}/${Date.now()}-${safeName}.${extension}`;
+  const filePath = `${user.id}/${Date.now()}-${safeName}.${extension}`;
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await adminSupabase.storage
     .from('certificates')
     .createSignedUploadUrl(filePath);
 
-  if (error) return { success: false, error: 'فشل في إنشاء رابط الرفع' };
+  if (error) {
+    console.error('Upload URL Error:', error);
+    return { success: false, error: 'فشل في إنشاء رابط الرفع' };
+  }
   return { success: true, data: { signedUrl: data.signedUrl, path: filePath } };
 }
 
@@ -145,12 +150,15 @@ export async function getSignedDownloadUrl(path: string): Promise<ActionResponse
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.storage
+  const adminSupabase = createAdminSupabase();
+  const { data, error } = await adminSupabase.storage
     .from('certificates')
     .createSignedUrl(path, 3600); // 1 hour
 
-  if (error) return { success: false, error: 'فشل في إنشاء رابط التحميل' };
+  if (error) {
+    console.error('Download URL Error:', error);
+    return { success: false, error: 'فشل في إنشاء رابط التحميل' };
+  }
   return { success: true, data: data.signedUrl };
 }
 
