@@ -31,6 +31,7 @@ export default function CoordinatorOpportunities() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   const { data: res, error, mutate } = useSWR(['coordinator-opportunities', page], () => getOpportunities(false, page, 10));
 
@@ -80,7 +81,6 @@ export default function CoordinatorOpportunities() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} فرصة تطوعية؟`)) return;
     
     setIsBulkProcessing(true);
     const idsArray = Array.from(selectedIds);
@@ -88,6 +88,7 @@ export default function CoordinatorOpportunities() {
     if (res.success) {
       setToast({ message: `تم حذف الفرص المحددة بنجاح`, type: 'success' });
       setSelectedIds(new Set());
+      setShowBulkDeleteModal(false);
       if (opportunities.length === idsArray.length && page > 1) setPage(page - 1);
       else mutate();
     } else {
@@ -170,6 +171,17 @@ export default function CoordinatorOpportunities() {
         icon={<Icons.trash />}
       />
 
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="تأكيد الحذف الجماعي"
+        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} فرصة تطوعية؟ سيتم إزالة جميع الطلبات المرتبطة بهذه الفرص ولا يمكن التراجع عن هذا الإجراء.`}
+        onConfirm={handleBulkDelete}
+        confirmText="نعم، احذف المحدد"
+        isDanger={true}
+        icon={<Icons.trash />}
+      />
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {selectedIds.size > 0 && (
           <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
@@ -177,7 +189,7 @@ export default function CoordinatorOpportunities() {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(true)} disabled={isBulkProcessing} style={{ color: '#10b981', borderColor: 'transparent' }}>تفعيل المحدد</button>
               <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(false)} disabled={isBulkProcessing} style={{ color: '#f59e0b', borderColor: 'transparent' }}>تعطيل المحدد</button>
-              <button className="btn btn--secondary btn--sm" onClick={handleBulkDelete} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
+              <button className="btn btn--secondary btn--sm" onClick={() => setShowBulkDeleteModal(true)} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
             </div>
           </div>
         )}

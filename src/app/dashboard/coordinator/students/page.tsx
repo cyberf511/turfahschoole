@@ -5,7 +5,12 @@ import useSWR from 'swr';
 import * as XLSX from 'xlsx';
 import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents } from '@/actions/students';
 import { Loading } from '@/components/ui/Loading';
+import { Modal } from '@/components/ui/Modal';
 import type { PreRegisteredStudent } from '@/actions/students';
+
+const Icons = {
+  trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+};
 
 export default function CoordinatorStudents() {
   const { data: res, error, mutate } = useSWR('pre-registered-students', getPreRegisteredStudents);
@@ -16,8 +21,11 @@ export default function CoordinatorStudents() {
   const [editingStudent, setEditingStudent] = useState<PreRegisteredStudent | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string }>({ type: 'success', text: '' });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +33,12 @@ export default function CoordinatorStudents() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress(10);
     setMessage({ text: '', type: 'success' });
+
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => prev < 90 ? prev + 10 : prev);
+    }, 200);
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -61,23 +74,32 @@ export default function CoordinatorStudents() {
 
         const uploadRes = await bulkPreRegisterStudents(parsedStudents);
         if (uploadRes.success) {
+          setUploadProgress(100);
           setMessage({ text: `تم رفع ${uploadRes.data?.count} طالبة بنجاح ✅`, type: 'success' });
           mutate();
         } else {
+          setUploadProgress(0);
           setMessage({ text: uploadRes.error || 'فشل في الرفع', type: 'error' });
         }
       } catch (err) {
         console.error(err);
+        setUploadProgress(0);
         setMessage({ text: 'حدث خطأ في قراءة ملف الإكسل', type: 'error' });
       }
+      clearInterval(progressInterval);
     };
 
     reader.onerror = () => {
+      clearInterval(progressInterval);
+      setUploadProgress(0);
       setMessage({ type: 'error', text: 'حدث خطأ أثناء معالجة الملف' });
     };
 
     reader.onloadend = () => {
-      setIsUploading(false);
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 1500);
       if (e.target) e.target.value = '';
     };
 
@@ -100,10 +122,12 @@ export default function CoordinatorStudents() {
     setIsSubmitting(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الطالبة؟')) return;
+  const executeDelete = async () => {
+    if (!studentToDelete) return;
     
-    setDeletingId(id);
+    setDeletingId(studentToDelete);
+    const id = studentToDelete;
+    setStudentToDelete(null);
     const res = await deletePreRegisteredStudent(id);
     if (res.success) {
       setMessage({ type: 'success', text: 'تم حذف الطالبة بنجاح' });
@@ -133,7 +157,6 @@ export default function CoordinatorStudents() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} طالبة؟`)) return;
     
     setIsBulkProcessing(true);
     const idsArray = Array.from(selectedIds);
@@ -141,6 +164,7 @@ export default function CoordinatorStudents() {
     if (res.success) {
       setMessage({ type: 'success', text: 'تم حذف الطالبات المحددة بنجاح' });
       setSelectedIds(new Set());
+      setShowBulkDeleteModal(false);
       mutate();
     } else {
       setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء الحذف الجماعي' });
@@ -178,7 +202,22 @@ export default function CoordinatorStudents() {
         </div>
       </div>
 
+      {isUploading && (
+        <div style={{ margin: '16px 0', background: 'var(--bg-tertiary)', borderRadius: '8px', overflow: 'hidden', height: '8px' }}>
+          <div style={{ 
+            height: '100%', 
+            background: 'var(--accent-primary)', 
+            width: `${uploadProgress}%`, 
+            transition: 'width 0.3s ease-out' 
+          }} />
+        </div>
+      )}
 
+      {message.text && (
+        <div className={`alert alert--${message.type}`} style={{ marginBottom: '16px' }}>
+          {message.text}
+        </div>
+      )}
 
       <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>قائمة الطالبات ({students.length})</h2>
       
@@ -194,7 +233,7 @@ export default function CoordinatorStudents() {
             <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
               <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>تم تحديد {selectedIds.size} طالبة</span>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn--secondary btn--sm" onClick={handleBulkDelete} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
+                <button className="btn btn--secondary btn--sm" onClick={() => setShowBulkDeleteModal(true)} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
               </div>
             </div>
           )}
@@ -255,7 +294,7 @@ export default function CoordinatorStudents() {
                         </button>
                         <button
                           className="btn btn--secondary btn--sm"
-                          onClick={() => student.id && handleDelete(student.id)}
+                          onClick={() => student.id && setStudentToDelete(student.id)}
                           disabled={deletingId === student.id}
                           style={{ color: 'var(--error)', borderColor: 'transparent' }}
                           title="حذف"
@@ -271,6 +310,28 @@ export default function CoordinatorStudents() {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={!!studentToDelete}
+        onClose={() => setStudentToDelete(null)}
+        title="تأكيد الحذف"
+        description="هل أنت متأكد من رغبتك في حذف هذه الطالبة من نظام التسجيل المسبق؟"
+        onConfirm={executeDelete}
+        confirmText="نعم، احذف"
+        isDanger={true}
+        icon={<Icons.trash />}
+      />
+
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="تأكيد الحذف الجماعي"
+        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} طالبة من نظام التسجيل المسبق؟`}
+        onConfirm={handleBulkDelete}
+        confirmText="نعم، احذف المحدد"
+        isDanger={true}
+        icon={<Icons.trash />}
+      />
 
       {/* Edit Modal */}
       {editingStudent && (
