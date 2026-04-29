@@ -12,13 +12,13 @@ export async function uploadCertificate(applicationId: string, certificatePath: 
 
   const supabase = await createServerSupabase();
 
-  // Verify the application belongs to the user and is approved
+  // Verify the application belongs to the user and is either approved or pending (for external certs)
   const { data: app } = await supabase
     .from('applications')
     .select('id, student_id, status')
     .eq('id', applicationId)
     .eq('student_id', user.id)
-    .eq('status', 'approved')
+    .in('status', ['approved', 'pending'])
     .single();
 
   if (!app) return { success: false, error: 'لم يتم العثور على الطلب أو غير مؤهل لرفع الشهادة' };
