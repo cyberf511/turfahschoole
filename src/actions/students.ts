@@ -6,6 +6,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin';
 import type { ActionResponse } from '@/types';
 
 export interface PreRegisteredStudent {
+  id?: string;
   email: string;
   full_name: string;
   national_id?: string;
@@ -70,4 +71,49 @@ export async function getPreRegisteredStudents(): Promise<ActionResponse<PreRegi
 
   if (error) return { success: false, error: 'فشل في جلب البيانات' };
   return { success: true, data };
+}
+
+export async function updatePreRegisteredStudent(id: string, updates: Partial<PreRegisteredStudent>): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  const adminSupabase = createAdminSupabase();
+  const { error } = await adminSupabase
+    .from('pre_registered_students')
+    .update({
+      email: updates.email?.toLowerCase().trim(),
+      full_name: updates.full_name,
+      national_id: updates.national_id || null,
+      phone: updates.phone || null,
+    })
+    .eq('id', id);
+
+  if (error) return { success: false, error: 'فشل في تحديث بيانات الطالبة' };
+  return { success: true };
+}
+
+export async function deletePreRegisteredStudent(id: string): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  const adminSupabase = createAdminSupabase();
+  const { error } = await adminSupabase
+    .from('pre_registered_students')
+    .delete()
+    .eq('id', id);
+
+  if (error) return { success: false, error: 'فشل في حذف الطالبة' };
+  return { success: true };
 }
