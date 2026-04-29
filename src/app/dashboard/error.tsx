@@ -57,10 +57,10 @@ export default function DashboardError({
         <div className="flex-center" style={{ gap: '16px' }}>
           <button 
             className="btn btn--primary" 
-            onClick={() => reset()}
+            onClick={() => window.location.reload()}
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <RefreshCcw size={18} /> حاول مرة أخرى
+            <RefreshCcw size={18} /> تحديث الصفحة
           </button>
           
           <Link href="/" className="btn btn--secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
