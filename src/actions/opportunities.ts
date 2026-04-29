@@ -157,8 +157,14 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
   }
 
   // Find related applications first
-  const { data: apps } = await supabase.from('applications').select('id').eq('opportunity_id', id);
+  const { data: apps } = await supabase.from('applications').select('id, completion_status').eq('opportunity_id', id);
   if (apps && apps.length > 0) {
+    // Check for verified certificates
+    const hasVerified = apps.some((a: any) => a.completion_status === 'verified');
+    if (hasVerified) {
+      return { success: false, error: 'لا يمكن حذف الفرصة لوجود شهادات موثقة مرتبطة بها، يرجى تعطيلها بدلاً من ذلك' };
+    }
+
     const appIds = apps.map((a: any) => a.id);
     // Delete notifications related to these applications
     await supabase.from('notifications').delete().in('related_application_id', appIds);
@@ -178,5 +184,67 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
   }
 
   if (error) return { success: false, error: 'فشل في حذف الفرصة' };
+  return { success: true };
+}
+
+export async function bulkDeleteOpportunities(ids: string[]): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  // Find related applications for ALL these opportunities
+  const { data: apps } = await supabase.from('applications').select('id, opportunity_id, completion_status').in('opportunity_id', ids);
+  if (apps && apps.length > 0) {
+    // Prevent deletion if ANY has verified certificates
+    const hasVerified = apps.some((a: any) => a.completion_status === 'verified');
+    if (hasVerified) {
+      return { success: false, error: 'بعض الفرص المحددة تحتوي على شهادات موثقة ولا يمكن حذفها، يرجى إلغاء تحديدها وتجربة الحذف مجدداً' };
+    }
+
+    const appIds = apps.map((a: any) => a.id);
+    await supabase.from('notifications').delete().in('related_application_id', appIds);
+    await supabase.from('applications').delete().in('id', appIds);
+  }
+
+  const { error } = await supabase.from('opportunities').delete().in('id', ids);
+  
+  if (!error) {
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: 'BULK_DELETE_OPPORTUNITIES',
+      description: `تم حذف ${ids.length} فرصة تطوعية`,
+    });
+  }
+
+  if (error) return { success: false, error: 'فشل في حذف الفرص' };
+  return { success: true };
+}
+
+export async function bulkToggleOpportunities(ids: string[], isActive: boolean): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  const { error } = await supabase.from('opportunities').update({ is_active: isActive, updated_at: new Date().toISOString() }).in('id', ids);
+  
+  if (!error) {
+    await supabase.from('audit_logs').insert({
+      admin_id: user.id,
+      action_type: isActive ? 'BULK_ACTIVATE_OPPORTUNITIES' : 'BULK_DEACTIVATE_OPPORTUNITIES',
+      description: `تم ${isActive ? 'تفعيل' : 'إيقاف'} ${ids.length} فرصة تطوعية`,
+    });
+  }
+
+  if (error) return { success: false, error: 'فشل في تحديث حالة الفرص' };
   return { success: true };
 }

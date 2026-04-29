@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
-import { getAllApplications, reviewApplication } from '@/actions/applications';
+import { getAllApplications, reviewApplication, bulkUpdateApplicationsStatus } from '@/actions/applications';
 import type { Application } from '@/types';
 import { APPLICATION_STATUS_LABELS } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -96,6 +96,8 @@ export default function CoordinatorApplications() {
 
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const { data: res, error, mutate } = useSWR(['coordinator-applications', filter, page], () => getAllApplications(filter, page, 10));
 
@@ -128,6 +130,36 @@ export default function CoordinatorApplications() {
       setToast({ message: res.error || 'حدث خطأ أثناء رفض الطلب', type: 'error' });
     }
     setReviewingId(null);
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedIds(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === applications.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(applications.map(a => a.id)));
+  };
+
+  const handleBulkAction = async (action: 'approve' | 'reject') => {
+    if (selectedIds.size === 0) return;
+    
+    setIsBulkProcessing(true);
+    const idsArray = Array.from(selectedIds);
+    const res = await bulkUpdateApplicationsStatus(idsArray, action);
+    
+    if (res.success && !res.error) {
+      setToast({ message: `تم ${action === 'approve' ? 'قبول' : 'رفض'} الطلبات המحددة بنجاح`, type: 'success' });
+      setSelectedIds(new Set());
+      mutate();
+    } else {
+      setToast({ message: res.error || 'حدث خطأ أثناء المعالجة الجماعية', type: 'error' });
+      if (res.success) mutate(); // Refresh anyway if it was partial success
+    }
+    setIsBulkProcessing(false);
   };
 
   const handleExport = () => {
@@ -187,10 +219,22 @@ export default function CoordinatorApplications() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {selectedIds.size > 0 && (
+          <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>تم تحديد {selectedIds.size} طلب</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn--secondary btn--sm" onClick={() => handleBulkAction('approve')} disabled={isBulkProcessing} style={{ color: '#10b981', borderColor: 'transparent' }}>قبول المحدد</button>
+              <button className="btn btn--secondary btn--sm" onClick={() => handleBulkAction('reject')} disabled={isBulkProcessing} style={{ color: '#ef4444', borderColor: 'transparent' }}>رفض المحدد</button>
+            </div>
+          </div>
+        )}
         <div className="data-table-wrap" style={{ border: 'none' }}>
           <table className="data-table">
             <thead style={{ background: 'var(--bg-tertiary)' }}>
               <tr>
+                <th style={{ padding: '16px 20px', width: '40px' }}>
+                  <input type="checkbox" checked={selectedIds.size === applications.length && applications.length > 0} onChange={toggleAll} />
+                </th>
                 <th style={{ padding: '16px 20px' }}>الطالبة</th>
                 <th style={{ padding: '16px 20px' }}>الفرصة</th>
                 <th style={{ padding: '16px 20px' }}>التاريخ</th>
@@ -215,7 +259,10 @@ export default function CoordinatorApplications() {
                 const student = app.student as unknown as StudentInfo | undefined;
                 const opp = app.opportunity as unknown as OppInfo | undefined;
                 return (
-                  <tr key={app.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedApp(app)}>
+                  <tr key={app.id} style={{ background: selectedIds.has(app.id) ? 'var(--accent-primary-soft)' : 'transparent', cursor: 'pointer' }} onClick={() => setSelectedApp(app)}>
+                    <td style={{ padding: '16px 20px' }}>
+                      <input type="checkbox" checked={selectedIds.has(app.id)} onChange={(e) => { e.stopPropagation(); toggleSelection(app.id); }} />
+                    </td>
                     <td style={{ padding: '16px 20px' }}>
                       <div className="flex-gap">
                         <div className="avatar avatar--sm" style={{ background: 'var(--accent-primary-soft)', color: 'var(--accent-primary)' }}>

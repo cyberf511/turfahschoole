@@ -117,3 +117,23 @@ export async function deletePreRegisteredStudent(id: string): Promise<ActionResp
   if (error) return { success: false, error: 'فشل في حذف الطالبة' };
   return { success: true };
 }
+
+export async function bulkDeletePreRegisteredStudents(ids: string[]): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  const adminSupabase = createAdminSupabase();
+  const { error } = await adminSupabase
+    .from('pre_registered_students')
+    .delete()
+    .in('id', ids);
+
+  if (error) return { success: false, error: 'فشل في حذف الطالبات المحددة' };
+  return { success: true };
+}

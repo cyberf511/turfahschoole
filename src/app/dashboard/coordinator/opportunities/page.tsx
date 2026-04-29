@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { getOpportunities, toggleOpportunity, deleteOpportunity } from '@/actions/opportunities';
+import { getOpportunities, toggleOpportunity, deleteOpportunity, bulkDeleteOpportunities, bulkToggleOpportunities } from '@/actions/opportunities';
 import type { Opportunity } from '@/types';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
@@ -29,6 +29,8 @@ export default function CoordinatorOpportunities() {
   const [oppToDelete, setOppToDelete] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const { data: res, error, mutate } = useSWR(['coordinator-opportunities', page], () => getOpportunities(false, page, 10));
 
@@ -47,6 +49,51 @@ export default function CoordinatorOpportunities() {
       setToast({ message: res.error || 'حدث خطأ أثناء تحديث الحالة', type: 'error' });
     }
     setProcessingId(null);
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedIds(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === opportunities.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(opportunities.map(o => o.id)));
+  };
+
+  const handleBulkToggle = async (isActive: boolean) => {
+    if (selectedIds.size === 0) return;
+    setIsBulkProcessing(true);
+    const idsArray = Array.from(selectedIds);
+    const res = await bulkToggleOpportunities(idsArray, isActive);
+    if (res.success) {
+      setToast({ message: `تم ${isActive ? 'تفعيل' : 'إيقاف'} ${selectedIds.size} فرصة بنجاح`, type: 'success' });
+      setSelectedIds(new Set());
+      mutate();
+    } else {
+      setToast({ message: res.error || 'حدث خطأ أثناء التحديث الجماعي', type: 'error' });
+    }
+    setIsBulkProcessing(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} فرصة تطوعية؟`)) return;
+    
+    setIsBulkProcessing(true);
+    const idsArray = Array.from(selectedIds);
+    const res = await bulkDeleteOpportunities(idsArray);
+    if (res.success) {
+      setToast({ message: `تم حذف الفرص المحددة بنجاح`, type: 'success' });
+      setSelectedIds(new Set());
+      if (opportunities.length === idsArray.length && page > 1) setPage(page - 1);
+      else mutate();
+    } else {
+      setToast({ message: res.error || 'حدث خطأ أثناء الحذف الجماعي', type: 'error' });
+    }
+    setIsBulkProcessing(false);
   };
 
   const executeDelete = async () => {
@@ -124,10 +171,23 @@ export default function CoordinatorOpportunities() {
       />
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {selectedIds.size > 0 && (
+          <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>تم تحديد {selectedIds.size} عنصر</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(true)} disabled={isBulkProcessing} style={{ color: '#10b981', borderColor: 'transparent' }}>تفعيل المحدد</button>
+              <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(false)} disabled={isBulkProcessing} style={{ color: '#f59e0b', borderColor: 'transparent' }}>تعطيل المحدد</button>
+              <button className="btn btn--secondary btn--sm" onClick={handleBulkDelete} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
+            </div>
+          </div>
+        )}
         <div className="data-table-wrap" style={{ border: 'none' }}>
           <table className="data-table">
             <thead style={{ background: 'var(--bg-tertiary)' }}>
               <tr>
+                <th style={{ padding: '16px 20px', width: '40px' }}>
+                  <input type="checkbox" checked={selectedIds.size === opportunities.length && opportunities.length > 0} onChange={toggleAll} />
+                </th>
                 <th style={{ padding: '16px 20px' }}>العنوان</th>
                 <th style={{ padding: '16px 20px' }}>الموقع</th>
                 <th style={{ padding: '16px 20px' }}>الساعات</th>
@@ -150,7 +210,10 @@ export default function CoordinatorOpportunities() {
                   </td>
                 </tr>
               ) : opportunities.map((opp) => (
-                <tr key={opp.id}>
+                <tr key={opp.id} style={{ background: selectedIds.has(opp.id) ? 'var(--accent-primary-soft)' : 'transparent' }}>
+                  <td style={{ padding: '16px 20px' }}>
+                    <input type="checkbox" checked={selectedIds.has(opp.id)} onChange={() => toggleSelection(opp.id)} />
+                  </td>
                   <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-primary)' }}>{opp.title}</td>
                   <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{opp.location}</td>
                   <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{opp.hours} ساعة</td>

@@ -164,3 +164,34 @@ export async function getStudentHours(): Promise<ActionResponse<number>> {
 
   return { success: true, data: data || 0 };
 }
+
+export async function bulkUpdateApplicationsStatus(
+  ids: string[],
+  action: 'approve' | 'reject',
+  reason?: string
+): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  // We loop to reuse the email and notification logic
+  const results = await Promise.all(
+    ids.map((id) => reviewApplication(id, action, reason))
+  );
+
+  const failedCount = results.filter((r) => !r.success).length;
+
+  if (failedCount > 0) {
+    return { 
+      success: true, // we still say success but with a warning, or false?
+      error: `تم إنجاز العملية مع فشل ${failedCount} طلبات` 
+    };
+  }
+
+  return { success: true };
+}

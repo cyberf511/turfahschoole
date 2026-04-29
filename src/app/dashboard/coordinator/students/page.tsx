@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import * as XLSX from 'xlsx';
-import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent } from '@/actions/students';
+import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents } from '@/actions/students';
 import { Loading } from '@/components/ui/Loading';
 import type { PreRegisteredStudent } from '@/actions/students';
 
@@ -16,6 +16,8 @@ export default function CoordinatorStudents() {
   const [editingStudent, setEditingStudent] = useState<PreRegisteredStudent | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string }>({ type: 'success', text: '' });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +118,36 @@ export default function CoordinatorStudents() {
     setMessage({ type: 'error', text: 'لا يمكن تعطيل الطالبات في مرحلة التسجيل المسبق، يمكنك حذفهن فقط.' });
   };
 
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedIds(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (!students) return;
+    if (selectedIds.size === students.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(students.map(s => s.id as string)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} طالبة؟`)) return;
+    
+    setIsBulkProcessing(true);
+    const idsArray = Array.from(selectedIds);
+    const res = await bulkDeletePreRegisteredStudents(idsArray);
+    if (res.success) {
+      setMessage({ type: 'success', text: 'تم حذف الطالبات المحددة بنجاح' });
+      setSelectedIds(new Set());
+      mutate();
+    } else {
+      setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء الحذف الجماعي' });
+    }
+    setIsBulkProcessing(false);
+  };
+
   const downloadTemplate = () => {
     const headers = ['البريد الإلكتروني', 'الاسم الرباعي', 'رقم الهوية', 'رقم الجوال', 'المرحلة الدراسية'];
     const sample = ['student@example.com', 'نورة محمد', '1122334455', '0500000000', 'first_secondary'];
@@ -158,10 +190,21 @@ export default function CoordinatorStudents() {
         </div>
       ) : (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {selectedIds.size > 0 && (
+            <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>تم تحديد {selectedIds.size} طالبة</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn--secondary btn--sm" onClick={handleBulkDelete} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
+              </div>
+            </div>
+          )}
           <div className="data-table-wrap" style={{ border: 'none' }}>
             <table className="data-table">
               <thead style={{ background: 'var(--bg-tertiary)' }}>
                 <tr>
+                  <th style={{ padding: '16px 20px', width: '40px' }}>
+                    <input type="checkbox" checked={students.length > 0 && selectedIds.size === students.length} onChange={toggleAll} />
+                  </th>
                   <th style={{ width: '40px', textAlign: 'center', padding: '16px 20px' }}>#</th>
                   <th style={{ padding: '16px 20px' }}>البريد الإلكتروني</th>
                   <th style={{ padding: '16px 20px' }}>الاسم الكامل</th>
@@ -172,7 +215,10 @@ export default function CoordinatorStudents() {
               </thead>
               <tbody>
                 {students.map((student, idx) => (
-                  <tr key={idx} style={{ cursor: 'default' }}>
+                  <tr key={student.id} style={{ background: student.id && selectedIds.has(student.id) ? 'var(--accent-primary-soft)' : 'transparent' }}>
+                    <td style={{ padding: '16px 20px' }}>
+                      <input type="checkbox" checked={student.id ? selectedIds.has(student.id) : false} onChange={() => student.id && toggleSelection(student.id)} />
+                    </td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-tertiary)', padding: '16px 20px' }}>{idx + 1}</td>
                     <td style={{ textAlign: 'right', padding: '16px 20px' }}>
                       <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.email}</span>
