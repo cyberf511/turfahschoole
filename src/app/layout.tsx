@@ -24,15 +24,6 @@ export default function RootLayout({
     <ClerkProvider 
       localization={arSA} 
       afterSignOutUrl="/"
-      appearance={{
-        baseTheme: dark,
-        variables: {
-          colorPrimary: '#10b981', // Emerald 500
-          colorBackground: '#111827', // Gray 900
-          colorInputBackground: '#1f2937', // Gray 800
-          colorInputText: '#f3f4f6', // Gray 100
-        }
-      }}
     >
       <html lang="ar" dir="rtl" data-theme="dark" suppressHydrationWarning>
         <head>
