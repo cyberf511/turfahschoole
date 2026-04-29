@@ -127,7 +127,11 @@ export async function getSignedUploadUrl(fileName: string): Promise<ActionRespon
   if (!user) return { success: false, error: 'غير مصرح' };
 
   const supabase = await createServerSupabase();
-  const filePath = `certificates/${user.id}/${Date.now()}-${fileName}`;
+  
+  // Sanitize filename to avoid Signed URL and RLS extension policy mismatch due to spaces/arabic characters
+  const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
+  const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '').replace(`.${extension}`, '') || 'cert';
+  const filePath = `certificates/${user.id}/${Date.now()}-${safeName}.${extension}`;
 
   const { data, error } = await supabase.storage
     .from('certificates')
