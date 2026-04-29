@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, PaginatedResponse, Application } from '@/types';
 import { createNotification } from './notifications';
-import { sendEmail, emailApproved, emailRejected } from '@/lib/email';
+import { sendEmail, emailApproved, emailRejected, emailApplicationReceived } from '@/lib/email';
 
 export async function getMyApplications(): Promise<ActionResponse<Application[]>> {
   const user = await currentUser();
@@ -92,6 +92,20 @@ export async function applyToOpportunity(opportunityId: string): Promise<ActionR
   });
 
   if (error) return { success: false, error: 'فشل في تقديم الطلب' };
+
+  // Fetch student info & opportunity title to send the confirmation email
+  const { data: studentData } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single();
+  const { data: oppData } = await supabase.from('opportunities').select('title').eq('id', opportunityId).single();
+
+  if (studentData?.email && oppData?.title) {
+    const emailContent = emailApplicationReceived(studentData.full_name || 'طالبة', oppData.title);
+    sendEmail({
+      to: studentData.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    }).catch(err => console.error('Failed to send application received email:', err));
+  }
+
   return { success: true };
 }
 

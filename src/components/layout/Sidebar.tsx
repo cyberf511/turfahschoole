@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import { useTheme } from '@/components/ThemeProvider';
 import type { Profile } from '@/types';
 
 interface SidebarProps {
@@ -47,6 +49,7 @@ const commonNav = [
 
 export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const role = profile?.role || 'student';
   const navItems = role === 'coordinator' || role === 'super_admin' ? coordinatorNav : studentNav;
   const sectionLabel = role === 'coordinator' || role === 'super_admin' ? 'المنسقة' : 'الطالبات';
@@ -143,16 +146,9 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
           <div className="sidebar__user">
             <UserButton
               appearance={{
+                baseTheme: theme === 'dark' ? dark : undefined,
                 elements: {
                   avatarBox: { width: '34px', height: '34px' },
-                },
-                variables: {
-                  colorBackground: 'var(--bg-primary)',
-                  colorText: 'var(--text-primary)',
-                  colorPrimary: 'var(--accent-primary)',
-                  colorInputBackground: 'var(--bg-secondary)',
-                  colorInputText: 'var(--text-primary)',
-                  colorTextSecondary: 'var(--text-secondary)',
                 }
               }}
             />
