@@ -118,35 +118,44 @@ export default function CoordinatorStudents() {
           <div className="empty-state__desc">قم برفع ملف إكسل لإضافة طالبات للنظام مباشرة ليتمكنوا من تخطي صفحة التسجيل</div>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: '40px', textAlign: 'center' }}>#</th>
-                <th>البريد الإلكتروني</th>
-                <th>الاسم الكامل</th>
-                <th>الجوال</th>
-                <th>الهوية</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map((student, idx) => (
-                <tr key={idx}>
-                  <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-tertiary)' }}>{idx + 1}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.email}</span>
-                  </td>
-                  <td>{student.full_name}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.phone || '—'}</span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.national_id || '—'}</span>
-                  </td>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="data-table-wrap" style={{ border: 'none' }}>
+            <table className="data-table">
+              <thead style={{ background: 'var(--bg-tertiary)' }}>
+                <tr>
+                  <th style={{ width: '40px', textAlign: 'center', padding: '16px 20px' }}>#</th>
+                  <th style={{ padding: '16px 20px' }}>البريد الإلكتروني</th>
+                  <th style={{ padding: '16px 20px' }}>الاسم الكامل</th>
+                  <th style={{ padding: '16px 20px' }}>الجوال</th>
+                  <th style={{ padding: '16px 20px' }}>الهوية</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {students.map((student, idx) => (
+                  <tr key={idx} style={{ cursor: 'default' }}>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-tertiary)', padding: '16px 20px' }}>{idx + 1}</td>
+                    <td style={{ textAlign: 'right', padding: '16px 20px' }}>
+                      <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.email}</span>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div className="flex-gap">
+                        <div className="avatar avatar--sm" style={{ background: 'var(--accent-primary-soft)', color: 'var(--accent-primary)' }}>
+                          {student.full_name?.[0] || '؟'}
+                        </div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{student.full_name}</div>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '16px 20px' }}>
+                      <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.phone || '—'}</span>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '16px 20px' }}>
+                      <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.national_id || '—'}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
