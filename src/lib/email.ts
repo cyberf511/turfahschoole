@@ -69,7 +69,7 @@ export function emailRejected(studentName: string, oppTitle: string, reason?: st
 }
 
 // Template: Certificate verified
-export function emailCertificateVerified(studentName: string, oppTitle: string) {
+export function emailCertificateVerified(studentName: string, oppTitle: string, certificateUrl: string) {
   return {
     subject: `📜 تم اعتماد شهادتك — ${oppTitle}`,
     html: `
@@ -79,7 +79,14 @@ export function emailCertificateVerified(studentName: string, oppTitle: string) 
           <h2 style="color:#059669;margin:8px 0 4px;">تم اعتماد شهادتك!</h2>
         </div>
         <p style="color:#374151;">مرحباً <strong>${studentName}</strong>،</p>
-        <p style="color:#374151;">تم اعتماد شهادتك لفرصة <strong>"${oppTitle}"</strong> وإضافة الساعات لسجلك التطوعي.</p>
+        <p style="color:#374151;">تم اعتماد مشاركتك في فرصة <strong>"${oppTitle}"</strong> وإضافة الساعات لسجلك التطوعي.</p>
+        
+        <p style="color:#374151;margin-top:20px;">لقد تم إصدار شهادة إنجاز رقمية خاصة بك تقديراً لجهودك. يمكنك عرضها وطباعتها من خلال الرابط أدناه:</p>
+        
+        <div style="text-align:center;margin:24px 0;">
+          <a href="${certificateUrl}" style="background-color:#059669;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">📜 عرض الشهادة الرقمية</a>
+        </div>
+        
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
         <p style="color:#9ca3af;font-size:0.8rem;text-align:center;">منصة التطوع — ثانوية طرفة بنت عبدالعزيز</p>
       </div>

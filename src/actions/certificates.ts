@@ -1,10 +1,12 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
+import { headers } from 'next/headers';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import type { ActionResponse, PaginatedResponse } from '@/types';
 import { createNotification } from './notifications';
+import { sendEmail, emailCertificateVerified } from '@/lib/email';
 
 export async function uploadCertificate(applicationId: string, certificatePath: string): Promise<ActionResponse> {
   const user = await currentUser();
@@ -104,13 +106,15 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
       verified_by: user.id,
     })
     .eq('id', applicationId)
-    .select('student_id, opportunity:opportunities(title)')
+    .select('student_id, opportunity:opportunities(title), student:profiles!student_id(full_name, email)')
     .single();
 
   if (error) return { success: false, error: 'فشل في توثيق الشهادة' };
 
   if (app) {
     const oppTitle = ((app.opportunity as unknown) as { title: string })?.title || '';
+    const student = (app.student as unknown) as { full_name: string, email: string };
+    
     await createNotification({
       userId: app.student_id,
       title: 'تم توثيق شهادتك',
@@ -118,6 +122,19 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
       type: 'certificate_verified',
       relatedApplicationId: applicationId,
     });
+
+    // Send Digital Certificate Email
+    if (student && student.email) {
+      const origin = headers().get('origin') || 'https://turfahschoole.vercel.app';
+      const certificateUrl = `${origin}/certificate/${applicationId}`;
+      
+      const emailContent = emailCertificateVerified(student.full_name, oppTitle, certificateUrl);
+      await sendEmail({
+        to: student.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+    }
   }
 
   return { success: true };
