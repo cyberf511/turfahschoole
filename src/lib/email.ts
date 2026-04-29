@@ -11,7 +11,7 @@ interface EmailParams {
 export async function sendEmail({ to, subject, html }: EmailParams) {
   try {
     const { error } = await resend.emails.send({
-      from: 'منصة التطوع noreply@turfahschoole.vercel.app',
+      from: 'منصة التطوع <onboarding@resend.dev>',
       to,
       subject,
       html,
