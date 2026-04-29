@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { createServerSupabase } from '@/lib/supabase/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import { formatDate } from '@/lib/utils';
 import type { Metadata } from 'next';
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CertificatePage({ params }: { params: { id: string } }) {
-  const supabase = await createServerSupabase();
+  const supabase = createAdminSupabase();
 
   const { data: app } = await supabase
     .from('applications')

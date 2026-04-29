@@ -126,7 +126,7 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
     // Send Digital Certificate Email
     if (student && student.email) {
       const headersList = await headers();
-      const origin = headersList.get('origin') || 'https://turfahschoole.vercel.app';
+      const origin = headersList.get('origin') || 'https://turfah.vercel.app';
       const certificateUrl = `${origin}/certificate/${applicationId}`;
       
       const emailContent = emailCertificateVerified(student.full_name, oppTitle, certificateUrl);

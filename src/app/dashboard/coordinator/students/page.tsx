@@ -93,8 +93,8 @@ export default function CoordinatorStudents() {
     <div className="animate-slide-up">
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="section-title">👥 إدارة الطالبات (التسجيل المسبق)</h1>
-          <p className="section-subtitle">رفع قائمة الطالبات لتخطي مرحلة التسجيل (Onboarding)</p>
+          <h1 className="section-title">👥 الطالبات</h1>
+          <p className="section-subtitle">إدارة الطالبات وتخطي مرحلة التسجيل عبر رفع ملف الإكسل</p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button className="btn btn--secondary" onClick={downloadTemplate} style={{ fontSize: '0.85rem' }}>
@@ -107,26 +107,9 @@ export default function CoordinatorStudents() {
         </div>
       </div>
 
-      {message.text && (
-        <div className={`toast toast--${message.type === 'success' ? 'success' : 'error'}`} style={{ position: 'static', marginBottom: '24px' }}>
-          {message.text}
-        </div>
-      )}
 
-      <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '12px', fontSize: '1.1rem' }}>كيفية تجهيز ملف الإكسل</h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.8' }}>
-          يجب أن يحتوي ملف الإكسل (.xlsx) على الأعمدة التالية بالترتيب:
-          <br />
-          <strong style={{ color: 'var(--text-primary)' }}>1. البريد الإلكتروني (Email)</strong> (إلزامي)<br />
-          <strong style={{ color: 'var(--text-primary)' }}>2. الاسم الكامل (Full Name)</strong> (إلزامي)<br />
-          <strong style={{ color: 'var(--text-primary)' }}>3. رقم الهوية (National ID)</strong> (اختياري)<br />
-          <strong style={{ color: 'var(--text-primary)' }}>4. رقم الجوال (Phone)</strong> (اختياري)<br />
-          <strong style={{ color: 'var(--text-primary)' }}>5. المرحلة الدراسية (Education Level)</strong> (اختياري: first_secondary, second_secondary, third_secondary)
-        </p>
-      </div>
 
-      <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>الطالبات المسجلات مسبقاً ({students.length})</h2>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>قائمة الطالبات ({students.length})</h2>
       
       {students.length === 0 ? (
         <div className="empty-state card">
@@ -139,6 +122,7 @@ export default function CoordinatorStudents() {
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>#</th>
                 <th>البريد الإلكتروني</th>
                 <th>الاسم الكامل</th>
                 <th>الجوال</th>
@@ -148,10 +132,17 @@ export default function CoordinatorStudents() {
             <tbody>
               {students.map((student, idx) => (
                 <tr key={idx}>
-                  <td style={{ direction: 'ltr', textAlign: 'right' }}>{student.email}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-tertiary)' }}>{idx + 1}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.email}</span>
+                  </td>
                   <td>{student.full_name}</td>
-                  <td style={{ direction: 'ltr', textAlign: 'right' }}>{student.phone || '—'}</td>
-                  <td>{student.national_id || '—'}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.phone || '—'}</span>
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <span dir="ltr" style={{ display: 'inline-block' }}>{student.national_id || '—'}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>
