@@ -22,6 +22,7 @@ interface CertApp {
   id: string;
   certificate_url: string;
   certificate_uploaded_at: string;
+  completion_status: string;
   student: { full_name?: string; email?: string } | null;
   opportunity: { title?: string; hours?: number } | null;
 }
@@ -150,14 +151,20 @@ export default function CoordinatorCertificates() {
                       >
                         <Icons.eye /> عرض الشهادة
                       </button>
-                      <button
-                        className="btn btn--primary btn--sm"
-                        onClick={() => handleVerify(cert.id)}
-                        disabled={verifyingId === cert.id}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10b981', borderColor: '#10b981' }}
-                      >
-                        {verifyingId === cert.id ? <div className="loading-spinner" style={{ width: '14px', height: '14px' }} /> : <><Icons.check /> توثيق</>}
-                      </button>
+                      {cert.completion_status !== 'verified' ? (
+                        <button
+                          className="btn btn--primary btn--sm"
+                          onClick={() => handleVerify(cert.id)}
+                          disabled={verifyingId === cert.id}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10b981', borderColor: '#10b981' }}
+                        >
+                          {verifyingId === cert.id ? <div className="loading-spinner" style={{ width: '14px', height: '14px' }} /> : <><Icons.check /> توثيق</>}
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0 8px' }}>
+                          <Icons.check /> تم التوثيق
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>
