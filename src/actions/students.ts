@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import type { ActionResponse } from '@/types';
 
 export interface PreRegisteredStudent {
@@ -28,8 +29,9 @@ export async function bulkPreRegisterStudents(students: PreRegisteredStudent[]):
     return { success: false, error: 'لم يتم العثور على طالبات في الملف' };
   }
 
-  // Insert into pre_registered_students using upsert based on email
-  const { data, error } = await supabase
+  // Insert into pre_registered_students using admin client to bypass RLS
+  const adminSupabase = createAdminSupabase();
+  const { data, error } = await adminSupabase
     .from('pre_registered_students')
     .upsert(
       students.map(s => ({
@@ -60,7 +62,8 @@ export async function getPreRegisteredStudents(): Promise<ActionResponse<PreRegi
     return { success: false, error: 'غير مصرح' };
   }
 
-  const { data, error } = await supabase
+  const adminSupabase = createAdminSupabase();
+  const { data, error } = await adminSupabase
     .from('pre_registered_students')
     .select('*')
     .order('created_at', { ascending: false });
