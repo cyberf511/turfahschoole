@@ -173,43 +173,6 @@ export default function CoordinatorApplications() {
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="modal-overlay animate-fade-in" onClick={() => setShowRejectModal(null)}>
-          <div className="modal card animate-scale-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
-            <div className="modal__header">
-              <h3 className="modal__title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger)' }}>
-                <Icons.x /> رفض الطلب
-              </h3>
-              <button className="modal__close" onClick={() => setShowRejectModal(null)}>✕</button>
-            </div>
-            <div className="modal__body">
-              <div className="form-group">
-                <label className="form-label">سبب الرفض (إلزامي للطالبة) *</label>
-                <textarea
-                  className="form-input"
-                  placeholder="اكتب سبب الرفض هنا ليظهر للطالبة..."
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </div>
-            <div className="modal__footer" style={{ display: 'flex', gap: '12px' }}>
-              <button className="btn btn--secondary" onClick={() => setShowRejectModal(null)} style={{ flex: 1 }}>إلغاء</button>
-              <button
-                className="btn btn--primary"
-                onClick={handleReject}
-                disabled={!rejectReason.trim() || reviewingId === showRejectModal}
-                style={{ flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)' }}
-              >
-                تأكيد الرفض
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="tabs" style={{ marginBottom: '24px', maxWidth: '500px' }}>
         {[
           { key: 'pending', label: '⏳ معلق' },
