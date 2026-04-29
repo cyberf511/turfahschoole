@@ -95,8 +95,6 @@ export default function CoordinatorApplications() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   const { data: res, error, mutate } = useSWR(['coordinator-applications', filter, page], () => getAllApplications(filter, page, 10));
@@ -119,11 +117,9 @@ export default function CoordinatorApplications() {
     setReviewingId(null);
   };
 
-  const handleReject = async () => {
-    if (!showRejectModal || !rejectReason.trim()) return;
-    const id = showRejectModal;
+  const handleReject = async (id: string, reason: string) => {
     setReviewingId(id);
-    const res = await reviewApplication(id, 'reject', rejectReason);
+    const res = await reviewApplication(id, 'reject', reason);
     if (res.success) {
       setSelectedApp(null);
       setToast({ message: 'تم رفض الطلب بنجاح', type: 'success' });
@@ -132,8 +128,6 @@ export default function CoordinatorApplications() {
       setToast({ message: res.error || 'حدث خطأ أثناء رفض الطلب', type: 'error' });
     }
     setReviewingId(null);
-    setShowRejectModal(null);
-    setRejectReason('');
   };
 
   const handleExport = () => {
@@ -292,9 +286,9 @@ export default function CoordinatorApplications() {
                             className="btn btn--sm btn--secondary"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setShowRejectModal(app.id);
-                              setRejectReason(`نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`);
+                              handleReject(app.id, `نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`);
                             }}
+                            disabled={reviewingId === app.id}
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                           >
                             <Icons.x /> رفض
@@ -405,14 +399,11 @@ export default function CoordinatorApplications() {
                 <div className="modal__footer" style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                   <button
                     className="btn btn--secondary"
-                    onClick={() => { 
-                      setShowRejectModal(selectedApp.id); 
-                      setRejectReason(`نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`);
-                      setSelectedApp(null); 
-                    }}
+                    onClick={() => handleReject(selectedApp.id, `نعتذر، لم يتم قبولك في الفرصة التطوعية: ${opp?.title || ''}`)}
+                    disabled={reviewingId === selectedApp.id}
                     style={{ flex: 1, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                   >
-                    رفض الطلب
+                    {reviewingId === selectedApp.id ? 'جاري الرفض...' : 'رفض الطلب'}
                   </button>
                   <button
                     className="btn btn--primary"
