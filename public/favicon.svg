@@ -1,42 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <!-- Background gradient -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#059669"/>
       <stop offset="100%" style="stop-color:#10b981"/>
     </linearGradient>
-    <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#fbbf24"/>
-      <stop offset="100%" style="stop-color:#f59e0b"/>
-    </linearGradient>
-    <linearGradient id="certGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff"/>
-      <stop offset="100%" style="stop-color:#e8f5e9"/>
-    </linearGradient>
   </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/>
   
-  <!-- Rounded background -->
-  <rect x="1" y="1" width="30" height="30" rx="8" fill="url(#bg)"/>
+  <!-- Graduation cap -->
+  <polygon points="32,12 8,26 32,40 56,26" fill="#ffffff"/>
+  <path d="M16 30 L16 42 Q32 52 48 42 L48 30" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
   
-  <!-- Certificate/scroll body -->
-  <rect x="8" y="12" width="16" height="12" rx="1.5" fill="url(#certGrad)" opacity="0.95"/>
-  
-  <!-- Certificate lines -->
-  <line x1="11" y1="16" x2="21" y2="16" stroke="#10b981" stroke-width="1" opacity="0.6" stroke-linecap="round"/>
-  <line x1="11" y1="19" x2="19" y2="19" stroke="#10b981" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
-  
-  <!-- Graduation cap top (diamond shape) -->
-  <polygon points="16,3 6,8 16,13 26,8" fill="url(#capGrad)"/>
-  
-  <!-- Graduation cap sides -->
-  <path d="M10 10 L10 15 Q16 19 22 15 L22 10" fill="none" stroke="#d97706" stroke-width="1.2" opacity="0.8"/>
-  
-  <!-- Cap tassel -->
-  <circle cx="16" cy="8" r="1.2" fill="#d97706"/>
-  <line x1="16" y1="9.2" x2="22" y2="14" stroke="#d97706" stroke-width="1" stroke-linecap="round"/>
-  <circle cx="22" cy="14.5" r="1" fill="#d97706"/>
-  
-  <!-- Small star/check on certificate -->
-  <path d="M24 20 L25.5 22.5 L28 23 L26 25 L26.5 27.5 L24 26 L21.5 27.5 L22 25 L20 23 L22.5 22.5Z" 
-        fill="#fbbf24" opacity="0.9" transform="translate(-3, -3) scale(0.7)"/>
+  <!-- Tassel -->
+  <circle cx="32" cy="26" r="2.5" fill="#fbbf24"/>
+  <line x1="32" y1="28.5" x2="48" y2="38" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="49" cy="39" r="2" fill="#fbbf24"/>
 </svg>
