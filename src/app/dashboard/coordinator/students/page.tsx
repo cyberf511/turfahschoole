@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import * as XLSX from 'xlsx';
-import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents } from '@/actions/students';
+import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents, addPreRegisteredStudent } from '@/actions/students';
 import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
 import type { PreRegisteredStudent } from '@/actions/students';
@@ -19,7 +19,15 @@ export default function CoordinatorStudents() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [editingStudent, setEditingStudent] = useState<PreRegisteredStudent | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newStudent, setNewStudent] = useState<Omit<PreRegisteredStudent, 'id'>>({
+    email: '',
+    full_name: '',
+    national_id: '',
+    phone: '',
+    education_level: 'first_secondary'
+  });
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -60,8 +68,8 @@ export default function CoordinatorStudents() {
             parsedStudents.push({
               email: String(row[0]).trim(),
               full_name: String(row[1] || '').trim(),
-              national_id: row[2] ? String(row[2]).trim() : undefined,
-              phone: row[3] ? String(row[3]).trim() : undefined,
+              national_id: row[2] ? String(row[2]).trim() : '',
+              phone: row[3] ? String(row[3]).trim() : '',
               education_level: row[4] ? String(row[4]).trim() : 'first_secondary'
             });
           }
@@ -118,6 +126,21 @@ export default function CoordinatorStudents() {
       mutate();
     } else {
       setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء التحديث' });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const res = await addPreRegisteredStudent(newStudent);
+    if (res.success) {
+      setMessage({ type: 'success', text: 'تم إضافة الطالبة بنجاح' });
+      setShowAddModal(false);
+      setNewStudent({ email: '', full_name: '', national_id: '', phone: '', education_level: 'first_secondary' });
+      mutate();
+    } else {
+      setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء الإضافة' });
     }
     setIsSubmitting(false);
   };
@@ -194,6 +217,9 @@ export default function CoordinatorStudents() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button className="btn btn--secondary" onClick={downloadTemplate} style={{ fontSize: '0.85rem' }}>
             ⬇️ تحميل قالب إكسل (XLSX)
+          </button>
+          <button className="btn btn--primary" onClick={() => setShowAddModal(true)}>
+            + إضافة طالبة
           </button>
           <label className="btn btn--primary" style={{ cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }}>
             {isUploading ? 'جاري الرفع...' : '+ رفع ملف إكسل'}
@@ -333,6 +359,88 @@ export default function CoordinatorStudents() {
         icon={<Icons.trash />}
       />
 
+      {/* Add Student Modal */}
+      {showAddModal && (
+        <div className="modal-overlay animate-fade-in" onClick={() => !isSubmitting && setShowAddModal(false)}>
+          <div className="modal card animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3 className="modal__title">إضافة طالبة جديدة</h3>
+              <button className="modal__close" onClick={() => !isSubmitting && setShowAddModal(false)} disabled={isSubmitting}>×</button>
+            </div>
+            <div className="modal__content">
+              <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">الاسم الرباعي</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newStudent.full_name}
+                    onChange={e => setNewStudent({ ...newStudent, full_name: e.target.value })}
+                    required
+                    placeholder="مثال: نورة محمد أحمد العتيبي"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">البريد الإلكتروني</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={newStudent.email}
+                    onChange={e => setNewStudent({ ...newStudent, email: e.target.value })}
+                    required
+                    placeholder="student@example.com"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">رقم الجوال</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newStudent.phone}
+                    onChange={e => setNewStudent({ ...newStudent, phone: e.target.value })}
+                    placeholder="05xxxxxxxx"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">رقم الهوية</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newStudent.national_id}
+                    onChange={e => setNewStudent({ ...newStudent, national_id: e.target.value })}
+                    required
+                    placeholder="1xxxxxxxxx"
+                    dir="ltr"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">المرحلة الدراسية</label>
+                  <select
+                    className="form-input"
+                    value={newStudent.education_level}
+                    onChange={e => setNewStudent({ ...newStudent, education_level: e.target.value })}
+                  >
+                    <option value="first_secondary">أول ثانوي</option>
+                    <option value="second_secondary">ثاني ثانوي</option>
+                    <option value="third_secondary">ثالث ثانوي</option>
+                  </select>
+                </div>
+                <div className="modal__footer" style={{ marginTop: '24px' }}>
+                  <button type="button" className="btn btn--secondary" onClick={() => setShowAddModal(false)} disabled={isSubmitting}>
+                    إلغاء
+                  </button>
+                  <button type="submit" className="btn btn--primary" disabled={isSubmitting}>
+                    {isSubmitting ? 'جاري الإضافة...' : 'إضافة الطالبة'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Modal */}
       {editingStudent && (
         <div className="modal-overlay animate-fade-in" onClick={() => !isSubmitting && setEditingStudent(null)}>
@@ -379,6 +487,7 @@ export default function CoordinatorStudents() {
                     className="form-input"
                     value={editingStudent.national_id || ''}
                     onChange={e => setEditingStudent({ ...editingStudent, national_id: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="modal__footer" style={{ marginTop: '24px' }}>
