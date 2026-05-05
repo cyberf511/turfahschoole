@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getOpportunity, updateOpportunity } from '@/actions/opportunities';
+import { getProfile } from '@/actions/profile';
 import { Edit } from 'lucide-react';
+import { Toast } from '@/components/ui/Toast';
 
 export default function EditOpportunity() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function EditOpportunity() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [form, setForm] = useState({
     title: '', description: '', location: '', hours: '',
     requirements: '', max_participants: '', start_date: '', end_date: '',
@@ -58,9 +61,15 @@ export default function EditOpportunity() {
       end_date: form.end_date || undefined,
     });
     if (res.success) {
-      router.push('/dashboard/coordinator/opportunities');
+      setToast({ message: 'تم تحديث الفرصة بنجاح ✅', type: 'success' });
+      setTimeout(() => router.push('/dashboard/coordinator/opportunities'), 1500);
     } else {
-      setError(res.error || 'حدث خطأ أثناء التحديث');
+      if (res.error?.includes('من إنشاء')) {
+        setToast({ message: res.error, type: 'error' });
+        setTimeout(() => router.push('/dashboard/coordinator/opportunities'), 3000);
+      } else {
+        setError(res.error || 'حدث خطأ أثناء التحديث');
+      }
       setSaving(false);
     }
   };
@@ -69,6 +78,9 @@ export default function EditOpportunity() {
 
   return (
     <div className="animate-slide-up">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={5000} />
+      )}
       <div className="section-header">
         <div>
           <h1 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Edit color="var(--accent-primary)" /> تعديل الفرصة التطوعية</h1>

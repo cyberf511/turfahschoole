@@ -114,6 +114,13 @@ export async function updateOpportunity(id: string, formData: Partial<Opportunit
     return { success: false, error: 'غير مصرح' };
   }
 
+  const { data: opp } = await supabase.from('opportunities').select('created_by, creator:profiles!created_by(full_name)').eq('id', id).single();
+  if (!opp) return { success: false, error: 'الفرصة غير موجودة' };
+  if (opp.created_by !== user.id && profile.role !== 'super_admin') {
+    const creatorName = ((opp.creator as unknown) as { full_name: string })?.full_name || 'منسق آخر';
+    return { success: false, error: `لا يمكنك تعديل هذه الفرصة لأنها من إنشاء "${creatorName}"` };
+  }
+
   const validated = OpportunityUpdateSchema.safeParse(formData);
   if (!validated.success) return { success: false, error: 'البيانات غير صالحة' };
 
@@ -131,6 +138,18 @@ export async function toggleOpportunity(id: string, isActive: boolean): Promise<
   if (!user) return { success: false, error: 'غير مصرح' };
 
   const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
+  const { data: opp } = await supabase.from('opportunities').select('created_by, creator:profiles!created_by(full_name)').eq('id', id).single();
+  if (!opp) return { success: false, error: 'الفرصة غير موجودة' };
+  if (opp.created_by !== user.id && profile.role !== 'super_admin') {
+    const creatorName = ((opp.creator as unknown) as { full_name: string })?.full_name || 'منسق آخر';
+    return { success: false, error: `لا يمكنك ${isActive ? 'تفعيل' : 'إيقاف'} هذه الفرصة لأنها من إنشاء "${creatorName}"` };
+  }
+
   const { error } = await supabase.from('opportunities').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('id', id);
   
   if (!error) {
@@ -154,6 +173,13 @@ export async function deleteOpportunity(id: string): Promise<ActionResponse> {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return { success: false, error: 'غير مصرح' };
+  }
+
+  const { data: opp } = await supabase.from('opportunities').select('created_by, creator:profiles!created_by(full_name)').eq('id', id).single();
+  if (!opp) return { success: false, error: 'الفرصة غير موجودة' };
+  if (opp.created_by !== user.id && profile.role !== 'super_admin') {
+    const creatorName = ((opp.creator as unknown) as { full_name: string })?.full_name || 'منسق آخر';
+    return { success: false, error: `لا يمكنك حذف هذه الفرصة لأنها من إنشاء "${creatorName}"` };
   }
 
   // Find related applications first
@@ -197,6 +223,17 @@ export async function bulkDeleteOpportunities(ids: string[]): Promise<ActionResp
     return { success: false, error: 'غير مصرح' };
   }
 
+  if (profile.role !== 'super_admin') {
+    const { data: opps } = await supabase.from('opportunities').select('id, created_by, creator:profiles!created_by(full_name)').in('id', ids);
+    if (opps) {
+      const notOwned = opps.filter(o => o.created_by !== user.id);
+      if (notOwned.length > 0) {
+        const names = notOwned.map(o => ((o.creator as unknown) as { full_name: string })?.full_name || 'منسق آخر');
+        return { success: false, error: `لا يمكنك حذف ${notOwned.length} فرصة لأنها من إنشاء: ${names.join('، ')}` };
+      }
+    }
+  }
+
   // Find related applications for ALL these opportunities
   const { data: apps } = await supabase.from('applications').select('id, opportunity_id, completion_status').in('opportunity_id', ids);
   if (apps && apps.length > 0) {
@@ -235,6 +272,17 @@ export async function bulkToggleOpportunities(ids: string[], isActive: boolean):
     return { success: false, error: 'غير مصرح' };
   }
 
+  if (profile.role !== 'super_admin') {
+    const { data: opps } = await supabase.from('opportunities').select('id, created_by, creator:profiles!created_by(full_name)').in('id', ids);
+    if (opps) {
+      const notOwned = opps.filter(o => o.created_by !== user.id);
+      if (notOwned.length > 0) {
+        const names = notOwned.map(o => ((o.creator as unknown) as { full_name: string })?.full_name || 'منسق آخر');
+        return { success: false, error: `لا يمكنك ${isActive ? 'تفعيل' : 'إيقاف'} ${notOwned.length} فرصة لأنها من إنشاء: ${names.join('، ')}` };
+      }
+    }
+  }
+
   const { error } = await supabase.from('opportunities').update({ is_active: isActive, updated_at: new Date().toISOString() }).in('id', ids);
   
   if (!error) {
@@ -248,3 +296,5 @@ export async function bulkToggleOpportunities(ids: string[], isActive: boolean):
   if (error) return { success: false, error: 'فشل في تحديث حالة الفرص' };
   return { success: true };
 }
+
+

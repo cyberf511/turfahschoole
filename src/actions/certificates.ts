@@ -1,5 +1,6 @@
 'use server';
 
+import crypto from 'crypto';
 import { currentUser } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { createServerSupabase } from '@/lib/supabase/server';
@@ -14,16 +15,15 @@ export async function uploadCertificate(applicationId: string, certificatePath: 
 
   const supabase = await createServerSupabase();
 
-  // Verify the application belongs to the user and is either approved or pending (for external certs)
   const { data: app } = await supabase
     .from('applications')
     .select('id, student_id, status')
     .eq('id', applicationId)
     .eq('student_id', user.id)
-    .in('status', ['approved', 'pending'])
+    .eq('status', 'approved')
     .single();
 
-  if (!app) return { success: false, error: 'لم يتم العثور على الطلب أو غير مؤهل لرفع الشهادة' };
+  if (!app) return { success: false, error: 'لم يتم العثور على الطلب أو أنه لم يُعتمد بعد. لا يمكن رفع الشهادة إلا للفرص المعتمدة.' };
 
   const { error } = await supabase
     .from('applications')
@@ -98,12 +98,15 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
     return { success: false, error: 'غير مصرح' };
   }
 
+  const verificationCode = crypto.randomBytes(6).toString('hex').slice(0, 12).toUpperCase();
+
   const { data: app, error } = await supabase
     .from('applications')
     .update({
       completion_status: 'verified',
       verified_at: new Date().toISOString(),
       verified_by: user.id,
+      verification_code: verificationCode,
     })
     .eq('id', applicationId)
     .select('student_id, opportunity:opportunities(title), student:profiles!student_id(full_name, email)')
@@ -127,7 +130,7 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
     if (student && student.email) {
       const headersList = await headers();
       const origin = headersList.get('origin') || 'https://turfah.vercel.app';
-      const certificateUrl = `${origin}/certificate/${applicationId}`;
+      const certificateUrl = `${origin}/certificate/${verificationCode}`;
       
       const emailContent = emailCertificateVerified(student.full_name, oppTitle, certificateUrl);
       await sendEmail({

@@ -18,7 +18,7 @@ export default async function CertificatePage({ params }: { params: { id: string
       student:profiles!student_id(full_name, national_id),
       opportunity:opportunities!opportunity_id(title, hours, location)
     `)
-    .eq('id', params.id)
+    .eq('verification_code', params.id.toUpperCase())
     .eq('completion_status', 'verified')
     .single();
 
@@ -29,6 +29,7 @@ export default async function CertificatePage({ params }: { params: { id: string
   const student = app.student as any;
   const opp = app.opportunity as any;
   const issueDate = formatDate(app.verified_at || new Date().toISOString());
+  const nationalId = student?.national_id ? `****${student.national_id.slice(-4)}` : '—';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Cairo', sans-serif" }}>

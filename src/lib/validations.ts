@@ -42,3 +42,11 @@ export const NotificationSchema = z.object({
   type: z.enum(['opportunity_update', 'application_approved', 'application_rejected', 'certificate_verified', 'system']) as z.ZodType<NotificationType>,
   relatedApplicationId: z.string().optional().nullable(),
 });
+
+export const PreRegisteredStudentSchema = z.object({
+  email: z.string().email('البريد الإلكتروني غير صحيح'),
+  full_name: z.string().min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل').max(100, 'الاسم طويل جداً'),
+  national_id: z.string().length(10, 'رقم الهوية يجب أن يكون 10 أرقام').regex(/^\d{10}$/, 'رقم الهوية يجب أن يحتوي على أرقام فقط'),
+  phone: z.string().optional().nullable(),
+  education_level: z.string().optional().nullable(),
+});

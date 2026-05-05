@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import * as XLSX from 'xlsx';
 import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents, addPreRegisteredStudent } from '@/actions/students';
+import { PreRegisteredStudentSchema } from '@/lib/validations';
 import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
 import type { PreRegisteredStudent } from '@/actions/students';
@@ -61,18 +62,31 @@ export default function CoordinatorStudents() {
         if (rows[0] && typeof rows[0][0] === 'string' && (rows[0][0].includes('email') || rows[0][0].includes('البريد'))) startIndex = 1;
 
         const parsedStudents: PreRegisteredStudent[] = [];
+        const validationErrors: string[] = [];
         
         for (let i = startIndex; i < rows.length; i++) {
           const row = rows[i];
           if (row && row.length >= 2 && row[0] && String(row[0]).trim() !== '') {
-            parsedStudents.push({
+            const studentData = {
               email: String(row[0]).trim(),
               full_name: String(row[1] || '').trim(),
               national_id: row[2] ? String(row[2]).trim() : '',
-              phone: row[3] ? String(row[3]).trim() : '',
+              phone: row[3] ? String(row[3]).trim() : undefined,
               education_level: row[4] ? String(row[4]).trim() : 'first_secondary'
-            });
+            };
+
+            const validation = PreRegisteredStudentSchema.safeParse(studentData);
+            if (validation.success) {
+              parsedStudents.push(studentData);
+            } else {
+              validationErrors.push(`السطر ${i + 1}: ${validation.error.issues[0]?.message}`);
+            }
           }
+        }
+
+        if (validationErrors.length > 0) {
+          setMessage({ text: `أخطاء في البيانات:\n${validationErrors.slice(0, 5).join('\n')}${validationErrors.length > 5 ? `\n...و ${validationErrors.length - 5} أخطاء أخرى` : ''}`, type: 'error' });
+          return;
         }
 
         if (parsedStudents.length === 0) {
@@ -132,6 +146,14 @@ export default function CoordinatorStudents() {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = PreRegisteredStudentSchema.safeParse(newStudent);
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]?.message || 'البيانات غير صالحة';
+      setMessage({ type: 'error', text: firstError });
+      return;
+    }
+    
     setIsSubmitting(true);
     const res = await addPreRegisteredStudent(newStudent);
     if (res.success) {

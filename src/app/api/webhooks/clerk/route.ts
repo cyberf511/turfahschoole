@@ -2,6 +2,7 @@ import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
+import { encrypt, getLastThreeDigits } from '@/lib/encryption';
 
 interface WebhookEvent {
   type: string;
@@ -52,9 +53,8 @@ export async function POST(req: Request) {
     const email = email_addresses?.[0]?.email_address || '';
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || username || null;
     
-    // Assign super_admin if username is exactly 'admin', 'super_admin', or 'superadmin'
-    const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
-    const userRole = allowedAdmins.includes(username?.toLowerCase() || '') ? 'super_admin' : 'student';
+    // Assign super_admin if username is exactly 'superadmin'
+    const userRole = username?.toLowerCase() === 'superadmin' ? 'super_admin' : 'student';
 
     // 1. Check if the user is pre-registered by the coordinator
     const { data: preReg } = await supabase
@@ -67,13 +67,22 @@ export async function POST(req: Request) {
     let profileCompleted = false;
     let finalFullName = fullName;
     let nationalId = null;
+    let nationalIdLast3 = null;
     let phone = null;
     let educationLevel = null;
 
     if (preReg) {
       profileCompleted = true;
       finalFullName = preReg.full_name || fullName;
-      nationalId = preReg.national_id;
+      
+      if (preReg.national_id_encrypted) {
+        nationalId = preReg.national_id_encrypted;
+      } else if (preReg.national_id) {
+        nationalId = encrypt(preReg.national_id);
+      }
+      
+      nationalIdLast3 = preReg.national_id_last3 || (preReg.national_id ? preReg.national_id.slice(-3) : null);
+      
       phone = preReg.phone;
       educationLevel = preReg.education_level;
     }
@@ -84,7 +93,8 @@ export async function POST(req: Request) {
       full_name: finalFullName,
       avatar_url: image_url || null,
       role: userRole,
-      national_id: nationalId,
+      national_id_encrypted: nationalId,
+      national_id_last3: nationalIdLast3 || null,
       phone: phone,
       education_level: educationLevel,
       profile_completed: profileCompleted,

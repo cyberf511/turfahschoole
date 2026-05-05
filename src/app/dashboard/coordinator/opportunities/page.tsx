@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { getOpportunities, toggleOpportunity, deleteOpportunity, bulkDeleteOpportunities, bulkToggleOpportunities } from '@/actions/opportunities';
+import { getProfile } from '@/actions/profile';
 import type { Opportunity } from '@/types';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
@@ -34,6 +35,9 @@ export default function CoordinatorOpportunities() {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   const { data: res, error, mutate } = useSWR(['coordinator-opportunities', page], () => getOpportunities(false, page, 10));
+  const { data: profileRes } = useSWR('my-profile', getProfile);
+  const currentUserId = profileRes?.success ? profileRes.data?.id : null;
+  const currentUserRole = profileRes?.success ? profileRes.data?.role : null;
 
   const opportunities = res?.success ? res.data || [] : [];
   const totalPages = res?.success ? res.totalPages || 1 : 1;
@@ -45,14 +49,25 @@ export default function CoordinatorOpportunities() {
     const res = await toggleOpportunity(id, !current);
     if (res.success) {
       setToast({ message: !current ? 'تم تفعيل الفرصة بنجاح' : 'تم إيقاف الفرصة بنجاح', type: 'success' });
-      mutate(); // refresh stats
+      mutate();
     } else {
       setToast({ message: res.error || 'حدث خطأ أثناء تحديث الحالة', type: 'error' });
     }
     setProcessingId(null);
   };
 
+  const canModifyOpportunity = (opp: Opportunity) => {
+    if (currentUserRole === 'super_admin') return true;
+    return opp.created_by === currentUserId;
+  };
+
   const toggleSelection = (id: string) => {
+    const opp = opportunities.find(o => o.id === id);
+    if (opp && !canModifyOpportunity(opp)) {
+      const creatorName = (opp.creator as any)?.full_name || 'منسق آخر';
+      setToast({ message: `لا يمكنك تحديد هذه الفرصة لأنها من إنشاء "${creatorName}"`, type: 'error' });
+      return;
+    }
     const newSelected = new Set(selectedIds);
     if (newSelected.has(id)) newSelected.delete(id);
     else newSelected.add(id);
@@ -84,6 +99,15 @@ export default function CoordinatorOpportunities() {
     
     setIsBulkProcessing(true);
     const idsArray = Array.from(selectedIds);
+    
+    const notOwned = opportunities.filter(o => selectedIds.has(o.id) && !canModifyOpportunity(o));
+    if (notOwned.length > 0) {
+      const names = notOwned.map(o => (o.creator as any)?.full_name || 'منسق آخر');
+      setToast({ message: `لا يمكنك حذف ${notOwned.length} فرصة لأنها من إنشاء: ${names.join('، ')}`, type: 'error' });
+      setIsBulkProcessing(false);
+      return;
+    }
+    
     const res = await bulkDeleteOpportunities(idsArray);
     if (res.success) {
       setToast({ message: `تم حذف الفرص المحددة بنجاح`, type: 'success' });
@@ -121,6 +145,7 @@ export default function CoordinatorOpportunities() {
       'الموقع': o.location,
       'الساعات': o.hours,
       'الحالة': o.is_active ? 'نشطة' : 'متوقفة',
+      'المنشئ': (o.creator as any)?.full_name || '—',
       'تاريخ البداية': o.start_date ? formatDate(o.start_date) : '—',
       'تاريخ الإنشاء': formatDate(o.created_at)
     }));
@@ -157,7 +182,12 @@ export default function CoordinatorOpportunities() {
       )}
 
       {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+          duration={5000}
+        />
       )}
 
       <Modal
@@ -196,35 +226,36 @@ export default function CoordinatorOpportunities() {
         <div className="data-table-wrap" style={{ border: 'none' }}>
           <table className="data-table">
             <thead style={{ background: 'var(--bg-tertiary)' }}>
-              <tr>
-                <th style={{ padding: '16px 20px', width: '40px' }}>
-                  <input type="checkbox" checked={selectedIds.size === opportunities.length && opportunities.length > 0} onChange={toggleAll} />
-                </th>
-                <th style={{ padding: '16px 20px' }}>العنوان</th>
-                <th style={{ padding: '16px 20px' }}>الموقع</th>
-                <th style={{ padding: '16px 20px' }}>الساعات</th>
-                <th style={{ padding: '16px 20px' }}>التاريخ</th>
-                <th style={{ padding: '16px 20px' }}>الحالة</th>
-                <th style={{ padding: '16px 20px', textAlign: 'center' }}>الإجراءات</th>
-              </tr>
+                <tr>
+                  <td style={{ padding: '16px 20px', width: '40px' }}>
+                    <input type="checkbox" checked={selectedIds.size === opportunities.length && opportunities.length > 0} onChange={toggleAll} />
+                  </td>
+                  <th style={{ padding: '16px 20px' }}>العنوان</th>
+                  <th style={{ padding: '16px 20px' }}>الموقع</th>
+                  <th style={{ padding: '16px 20px' }}>الساعات</th>
+                  <th style={{ padding: '16px 20px' }}>التاريخ</th>
+                  <th style={{ padding: '16px 20px' }}>الحالة</th>
+                  <th style={{ padding: '16px 20px' }}>المنشئ</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'center' }}>الإجراءات</th>
+                </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '48px' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px' }}>
                     <Loading fullHeight={false} />
                   </td>
                 </tr>
               ) : opportunities.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-tertiary)' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-tertiary)' }}>
                     لا توجد فرص تطوعية بعد، أنشئ أول فرصة!
                   </td>
                 </tr>
               ) : opportunities.map((opp) => (
-                <tr key={opp.id} style={{ background: selectedIds.has(opp.id) ? 'var(--accent-primary-soft)' : 'transparent' }}>
+                <tr key={opp.id} style={{ background: selectedIds.has(opp.id) ? 'var(--accent-primary-soft)' : 'transparent', opacity: canModifyOpportunity(opp) ? 1 : 0.65 }}>
                   <td style={{ padding: '16px 20px' }}>
-                    <input type="checkbox" checked={selectedIds.has(opp.id)} onChange={() => toggleSelection(opp.id)} />
+                    <input type="checkbox" checked={selectedIds.has(opp.id)} onChange={() => toggleSelection(opp.id)} disabled={!canModifyOpportunity(opp)} />
                   </td>
                   <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-primary)' }}>{opp.title}</td>
                   <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{opp.location}</td>
@@ -235,35 +266,46 @@ export default function CoordinatorOpportunities() {
                       {opp.is_active ? 'نشطة' : 'متوقفة'}
                     </span>
                   </td>
+                  <td style={{ padding: '16px 20px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    {(opp.creator as any)?.full_name || '—'}
+                  </td>
                   <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      <button
-                        className={`btn btn--sm ${opp.is_active ? 'btn--secondary' : 'btn--primary'}`}
-                        onClick={() => handleToggle(opp.id, opp.is_active)}
-                        disabled={processingId === opp.id}
-                        style={opp.is_active ? { color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' } : {}}
-                      >
-                        {processingId === opp.id ? <div className="loading-spinner" style={{ width: '14px', height: '14px' }} /> : (opp.is_active ? 'إيقاف' : 'تفعيل')}
-                      </button>
+                      {canModifyOpportunity(opp) ? (
+                        <>
+                          <button
+                            className={`btn btn--sm ${opp.is_active ? 'btn--secondary' : 'btn--primary'}`}
+                            onClick={() => handleToggle(opp.id, opp.is_active)}
+                            disabled={processingId === opp.id}
+                            style={opp.is_active ? { color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' } : {}}
+                          >
+                            {processingId === opp.id ? <div className="loading-spinner" style={{ width: '14px', height: '14px' }} /> : (opp.is_active ? 'إيقاف' : 'تفعيل')}
+                          </button>
 
-                      <Link
-                        href={`/dashboard/coordinator/opportunities/${opp.id}/edit`}
-                        className="btn btn--secondary btn--sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0 }}
-                        title="تعديل الفرصة"
-                      >
-                        <Icons.edit />
-                      </Link>
+                          <Link
+                            href={`/dashboard/coordinator/opportunities/${opp.id}/edit`}
+                            className="btn btn--secondary btn--sm"
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0 }}
+                            title="تعديل الفرصة"
+                          >
+                            <Icons.edit />
+                          </Link>
 
-                      <button
-                        className="btn btn--secondary btn--sm"
-                        onClick={() => setOppToDelete(opp.id)}
-                        disabled={processingId === opp.id}
-                        title="حذف الفرصة"
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                      >
-                        <Icons.trash />
-                      </button>
+                          <button
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => setOppToDelete(opp.id)}
+                            disabled={processingId === opp.id}
+                            title="حذف الفرصة"
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                          >
+                            <Icons.trash />
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic', cursor: 'not-allowed' }} title={`🔒 لا يمكنك التعديل — أنشأها ${(opp.creator as any)?.full_name || 'منسق آخر'}`}>
+                          🔒 مقفلة
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>

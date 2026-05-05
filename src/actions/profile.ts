@@ -21,8 +21,7 @@ export async function getProfile(): Promise<ActionResponse<Profile>> {
     // If not found, create a minimal profile
     if (error.code === 'PGRST116') {
       const email = user.emailAddresses[0]?.emailAddress || '';
-      const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
-      const role = allowedAdmins.includes(user.username?.toLowerCase() || '') ? 'super_admin' : 'student';
+      const role = user.username?.toLowerCase() === 'superadmin' ? 'super_admin' : 'student';
 
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
