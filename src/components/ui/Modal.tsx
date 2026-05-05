@@ -5,11 +5,12 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   confirmText?: string;
   cancelText?: string;
   isDanger?: boolean;
   icon?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function Modal({ 
@@ -18,10 +19,11 @@ export function Modal({
   title, 
   description, 
   onConfirm, 
-  confirmText = 'تأكيد', 
+  confirmText, 
   cancelText = 'إلغاء',
   isDanger = false,
-  icon
+  icon,
+  children
 }: ModalProps) {
   if (!isOpen) return null;
 
@@ -38,7 +40,7 @@ export function Modal({
       padding: '24px'
     }}>
       <div className="card animate-scale-in" style={{ 
-        maxWidth: '400px', 
+        maxWidth: '440px', 
         width: '100%', 
         padding: '32px', 
         textAlign: 'center', 
@@ -62,6 +64,7 @@ export function Modal({
             {description}
           </p>
         )}
+        {children && <div style={{ marginBottom: '24px' }}>{children}</div>}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button 
             className="btn btn--secondary" 
@@ -70,13 +73,16 @@ export function Modal({
           >
             {cancelText}
           </button>
-          <button 
-            className={`btn ${isDanger ? '' : 'btn--primary'}`} 
-            onClick={onConfirm}
-            style={isDanger ? { flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff' } : { flex: 1 }}
-          >
-            {confirmText}
-          </button>
+          {onConfirm && (
+            <button 
+              className={`btn ${isDanger ? '' : 'btn--primary'}`} 
+              onClick={onConfirm}
+              style={isDanger ? { flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff' } : { flex: 1 }}
+              disabled={!confirmText}
+            >
+              {confirmText || 'تأكيد'}
+            </button>
+          )}
         </div>
       </div>
     </div>

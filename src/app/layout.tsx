@@ -12,7 +12,10 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 export const metadata: Metadata = {
   title: 'منصة العمل التطوعي — ثانوية طرفة بنت عبدالعزيز',
   description: 'منصة لحصر ساعات التطوع لدى الطالبات وتقديم الفرص التطوعية في ثانوية طرفة بنت عبدالعزيز',
-  icons: { icon: '/favicon.ico' },
+  icons: { 
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

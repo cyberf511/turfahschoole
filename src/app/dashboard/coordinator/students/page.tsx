@@ -7,6 +7,7 @@ import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredS
 import { PreRegisteredStudentSchema } from '@/lib/validations';
 import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import type { PreRegisteredStudent } from '@/actions/students';
 
 const Icons = {
@@ -34,6 +35,7 @@ export default function CoordinatorStudents() {
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string }>({ type: 'success', text: '' });
@@ -205,14 +207,31 @@ export default function CoordinatorStudents() {
     if (selectedIds.size === 0) return;
     
     setIsBulkProcessing(true);
+    setBulkDeleteProgress(0);
+    
     const idsArray = Array.from(selectedIds);
+    const total = idsArray.length;
+    const progressInterval = setInterval(() => {
+      setBulkDeleteProgress(prev => {
+        const next = prev + (100 / total);
+        return next < 90 ? next : prev;
+      });
+    }, 150);
+    
     const res = await bulkDeletePreRegisteredStudents(idsArray);
+    clearInterval(progressInterval);
+    
     if (res.success) {
-      setMessage({ type: 'success', text: 'تم حذف الطالبات المحددة بنجاح' });
-      setSelectedIds(new Set());
-      setShowBulkDeleteModal(false);
-      mutate();
+      setBulkDeleteProgress(100);
+      setTimeout(() => {
+        setMessage({ type: 'success', text: `تم حذف ${total} طالبة بنجاح ✅` });
+        setSelectedIds(new Set());
+        setShowBulkDeleteModal(false);
+        setBulkDeleteProgress(0);
+        mutate();
+      }, 800);
     } else {
+      setBulkDeleteProgress(0);
       setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء الحذف الجماعي' });
     }
     setIsBulkProcessing(false);
@@ -252,13 +271,8 @@ export default function CoordinatorStudents() {
       </div>
 
       {isUploading && (
-        <div style={{ margin: '16px 0', background: 'var(--bg-tertiary)', borderRadius: '8px', overflow: 'hidden', height: '8px' }}>
-          <div style={{ 
-            height: '100%', 
-            background: 'var(--accent-primary)', 
-            width: `${uploadProgress}%`, 
-            transition: 'width 0.3s ease-out' 
-          }} />
+        <div className="card" style={{ padding: '20px', marginBottom: '16px' }}>
+          <ProgressBar progress={uploadProgress} status="uploading" />
         </div>
       )}
 
@@ -373,14 +387,19 @@ export default function CoordinatorStudents() {
 
       <Modal
         isOpen={showBulkDeleteModal}
-        onClose={() => setShowBulkDeleteModal(false)}
+        onClose={() => !isBulkProcessing && setShowBulkDeleteModal(false)}
         title="تأكيد الحذف الجماعي"
-        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} طالبة من نظام التسجيل المسبق؟`}
-        onConfirm={handleBulkDelete}
-        confirmText="نعم، احذف المحدد"
+        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} طالبة؟`}
+        onConfirm={!isBulkProcessing ? handleBulkDelete : undefined}
+        confirmText={isBulkProcessing ? 'جاري الحذف...' : 'نعم، احذف المحدد'}
+        cancelText={isBulkProcessing ? undefined : 'إلغاء'}
         isDanger={true}
         icon={<Icons.trash />}
-      />
+      >
+        {isBulkProcessing && (
+          <ProgressBar progress={bulkDeleteProgress} status="deleting" />
+        )}
+      </Modal>
 
       {/* Add Student Modal */}
       {showAddModal && (

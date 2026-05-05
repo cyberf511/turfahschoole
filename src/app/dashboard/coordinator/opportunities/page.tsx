@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Pagination } from '@/components/ui/Pagination';
 import { Toast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { StatsCards } from '@/components/ui/StatsCards';
 import { exportToCSV } from '@/lib/export';
 import { Loading } from '@/components/ui/Loading';
@@ -32,6 +33,8 @@ export default function CoordinatorOpportunities() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'toggle' | null>(null);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   const { data: res, error, mutate } = useSWR(['coordinator-opportunities', page], () => getOpportunities(false, page, 10));
@@ -82,14 +85,34 @@ export default function CoordinatorOpportunities() {
   const handleBulkToggle = async (isActive: boolean) => {
     if (selectedIds.size === 0) return;
     setIsBulkProcessing(true);
+    setBulkAction('toggle');
+    setBulkProgress(0);
+    
     const idsArray = Array.from(selectedIds);
+    const total = idsArray.length;
+    const progressInterval = setInterval(() => {
+      setBulkProgress(prev => {
+        const next = prev + (100 / total);
+        return next < 90 ? next : prev;
+      });
+    }, 150);
+    
     const res = await bulkToggleOpportunities(idsArray, isActive);
+    clearInterval(progressInterval);
+    
     if (res.success) {
-      setToast({ message: `تم ${isActive ? 'تفعيل' : 'إيقاف'} ${selectedIds.size} فرصة بنجاح`, type: 'success' });
-      setSelectedIds(new Set());
-      mutate();
+      setBulkProgress(100);
+      setTimeout(() => {
+        setToast({ message: `تم ${isActive ? 'تفعيل' : 'إيقاف'} ${selectedIds.size} فرصة بنجاح`, type: 'success' });
+        setSelectedIds(new Set());
+        setBulkAction(null);
+        setBulkProgress(0);
+        mutate();
+      }, 800);
     } else {
+      setBulkProgress(0);
       setToast({ message: res.error || 'حدث خطأ أثناء التحديث الجماعي', type: 'error' });
+      setBulkAction(null);
     }
     setIsBulkProcessing(false);
   };
@@ -98,25 +121,46 @@ export default function CoordinatorOpportunities() {
     if (selectedIds.size === 0) return;
     
     setIsBulkProcessing(true);
+    setBulkAction('delete');
+    setBulkProgress(0);
+    
     const idsArray = Array.from(selectedIds);
     
     const notOwned = opportunities.filter(o => selectedIds.has(o.id) && !canModifyOpportunity(o));
     if (notOwned.length > 0) {
       const names = notOwned.map(o => (o.creator as any)?.full_name || 'منسق آخر');
       setToast({ message: `لا يمكنك حذف ${notOwned.length} فرصة لأنها من إنشاء: ${names.join('، ')}`, type: 'error' });
+      setBulkAction(null);
       setIsBulkProcessing(false);
       return;
     }
     
+    const total = idsArray.length;
+    const progressInterval = setInterval(() => {
+      setBulkProgress(prev => {
+        const next = prev + (100 / total);
+        return next < 90 ? next : prev;
+      });
+    }, 150);
+    
     const res = await bulkDeleteOpportunities(idsArray);
+    clearInterval(progressInterval);
+    
     if (res.success) {
-      setToast({ message: `تم حذف الفرص المحددة بنجاح`, type: 'success' });
-      setSelectedIds(new Set());
-      setShowBulkDeleteModal(false);
-      if (opportunities.length === idsArray.length && page > 1) setPage(page - 1);
-      else mutate();
+      setBulkProgress(100);
+      setTimeout(() => {
+        setToast({ message: `تم حذف الفرص المحددة بنجاح`, type: 'success' });
+        setSelectedIds(new Set());
+        setShowBulkDeleteModal(false);
+        setBulkAction(null);
+        setBulkProgress(0);
+        if (opportunities.length === idsArray.length && page > 1) setPage(page - 1);
+        else mutate();
+      }, 800);
     } else {
+      setBulkProgress(0);
       setToast({ message: res.error || 'حدث خطأ أثناء الحذف الجماعي', type: 'error' });
+      setBulkAction(null);
     }
     setIsBulkProcessing(false);
   };
@@ -203,24 +247,34 @@ export default function CoordinatorOpportunities() {
 
       <Modal
         isOpen={showBulkDeleteModal}
-        onClose={() => setShowBulkDeleteModal(false)}
+        onClose={() => !isBulkProcessing && setShowBulkDeleteModal(false)}
         title="تأكيد الحذف الجماعي"
-        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} فرصة تطوعية؟ سيتم إزالة جميع الطلبات المرتبطة بهذه الفرص ولا يمكن التراجع عن هذا الإجراء.`}
-        onConfirm={handleBulkDelete}
-        confirmText="نعم، احذف المحدد"
+        description={`هل أنت متأكد من رغبتك في حذف ${selectedIds.size} فرصة تطوعية؟`}
+        onConfirm={!isBulkProcessing ? handleBulkDelete : undefined}
+        confirmText={isBulkProcessing ? 'جاري الحذف...' : 'نعم، احذف المحدد'}
+        cancelText={isBulkProcessing ? undefined : 'إلغاء'}
         isDanger={true}
         icon={<Icons.trash />}
-      />
+      >
+        {isBulkProcessing && bulkAction === 'delete' && (
+          <ProgressBar progress={bulkProgress} status="deleting" />
+        )}
+      </Modal>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {selectedIds.size > 0 && (
-          <div style={{ background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ position: 'relative', background: 'var(--accent-primary-soft)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
             <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>تم تحديد {selectedIds.size} عنصر</span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(true)} disabled={isBulkProcessing} style={{ color: '#10b981', borderColor: 'transparent' }}>تفعيل المحدد</button>
               <button className="btn btn--secondary btn--sm" onClick={() => handleBulkToggle(false)} disabled={isBulkProcessing} style={{ color: '#f59e0b', borderColor: 'transparent' }}>تعطيل المحدد</button>
               <button className="btn btn--secondary btn--sm" onClick={() => setShowBulkDeleteModal(true)} disabled={isBulkProcessing} style={{ color: 'var(--error)', borderColor: 'transparent' }}>حذف المحدد</button>
             </div>
+            {isBulkProcessing && bulkAction === 'toggle' && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-primary)', padding: '12px 20px', borderBottom: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <ProgressBar progress={bulkProgress} status="processing" />
+              </div>
+            )}
           </div>
         )}
         <div className="data-table-wrap" style={{ border: 'none' }}>
