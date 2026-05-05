@@ -37,7 +37,7 @@ const studentNav = [
 const coordinatorNav = [
   { href: '/dashboard/coordinator', icon: Icons.Home, label: 'الرئيسية' },
   { href: '/dashboard/coordinator/opportunities', icon: Icons.Pen, label: 'الفرص التطوعية' },
-  { href: '/dashboard/coordinator/applications', icon: Icons.Clipboard, label: 'طلبات الطالبات' },
+  { href: '/dashboard/coordinator/applications', icon: Icons.Clipboard, label: ' موافقات الفرص' },
   { href: '/dashboard/coordinator/students', icon: Icons.Clipboard, label: 'الطالبات' },
   { href: '/dashboard/coordinator/certificates', icon: Icons.Certificate, label: 'مراجعة الشهادات' },
   { href: '/dashboard/coordinator/content', icon: Icons.Layout, label: 'إدارة المحتوى' },

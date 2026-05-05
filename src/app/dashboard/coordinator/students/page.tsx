@@ -21,6 +21,7 @@ export default function CoordinatorStudents() {
   const [isUploading, setIsUploading] = useState(false);
   const [editingStudent, setEditingStudent] = useState<PreRegisteredStudent | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [addModalError, setAddModalError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStudent, setNewStudent] = useState<Omit<PreRegisteredStudent, 'id'>>({
     email: '',
@@ -146,11 +147,11 @@ export default function CoordinatorStudents() {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAddModalError('');
     
     const validation = PreRegisteredStudentSchema.safeParse(newStudent);
     if (!validation.success) {
-      const firstError = validation.error.issues[0]?.message || 'البيانات غير صالحة';
-      setMessage({ type: 'error', text: firstError });
+      setAddModalError(validation.error.issues[0]?.message || 'البيانات غير صالحة');
       return;
     }
     
@@ -162,7 +163,7 @@ export default function CoordinatorStudents() {
       setNewStudent({ email: '', full_name: '', national_id: '', phone: '', education_level: 'first_secondary' });
       mutate();
     } else {
-      setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء الإضافة' });
+      setAddModalError(res.error || 'حدث خطأ أثناء الإضافة');
     }
     setIsSubmitting(false);
   };
@@ -391,6 +392,11 @@ export default function CoordinatorStudents() {
             </div>
             <div className="modal__content">
               <form onSubmit={handleAddStudent} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {addModalError && (
+                  <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>
+                    {addModalError}
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label">الاسم الرباعي</label>
                   <input
