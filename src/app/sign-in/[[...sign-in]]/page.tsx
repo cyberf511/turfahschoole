@@ -1,6 +1,12 @@
+'use client';
+
 import { SignIn } from '@clerk/nextjs';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function SignInPage() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -10,11 +16,18 @@ export default function SignInPage() {
         </div>
         <SignIn
           appearance={{
+            variables: {
+              colorBackground: isDark ? '#0f1629' : '#ffffff',
+              colorInputBackground: isDark ? '#1a2340' : '#f1f5f9',
+              colorText: isDark ? '#f1f5f9' : '#0f172a',
+              colorTextSecondary: isDark ? '#94a3b8' : '#475569',
+              colorPrimary: '#059669',
+              colorInputText: isDark ? '#f1f5f9' : '#0f172a',
+            },
             elements: {
               rootBox: { width: '100%' },
               card: {
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
+                border: `1px solid ${isDark ? 'rgba(148,163,184,0.1)' : 'rgba(15,23,42,0.08)'}`,
                 borderRadius: 'var(--radius-lg)',
                 boxShadow: 'var(--shadow-lg)',
               },
@@ -29,12 +42,8 @@ export default function SignInPage() {
               socialButtonsBlockButtonText: { color: 'var(--text-primary)' },
               formFieldLabel: { color: 'var(--text-primary)' },
               formFieldInput: {
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-primary)',
                 borderRadius: 'var(--radius-md)',
               },
-              formFieldInputPlaceholder: { color: 'var(--text-tertiary)' },
               formButtonPrimary: {
                 background: 'var(--accent-primary)',
                 borderRadius: 'var(--radius-md)',
