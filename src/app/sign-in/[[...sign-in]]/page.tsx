@@ -1,6 +1,7 @@
 'use client';
 
 import { SignIn } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function SignInPage() {
@@ -16,6 +17,7 @@ export default function SignInPage() {
         </div>
         <SignIn
           appearance={{
+            baseTheme: isDark ? dark : undefined,
             variables: {
               colorBackground: isDark ? '#0f1629' : '#ffffff',
               colorInputBackground: isDark ? '#1a2340' : '#f1f5f9',
