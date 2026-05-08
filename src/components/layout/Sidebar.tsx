@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from '@/components/ThemeProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -52,10 +52,7 @@ const commonNav = [
 export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
-  const { user: clerkUser } = useUser();
-  // Use Clerk publicMetadata as fast path (instant), fall back to profile (async)
-  const clerkRole = (clerkUser?.publicMetadata as Record<string, unknown> | undefined)?.role as string | undefined;
-  const role = clerkRole || profile?.role || 'student';
+  const role = profile?.role || 'student';
   const userButtonAppearance = useMemo(() => ({
     baseTheme: theme === 'dark' ? dark : undefined,
     elements: { avatarBox: { width: '34px', height: '34px' } },
