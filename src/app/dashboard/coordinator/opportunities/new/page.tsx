@@ -53,7 +53,7 @@ export default function NewOpportunity() {
         <form onSubmit={handleSubmit} className="onboarding-form">
           <div className="form-group">
             <label className="form-label">عنوان الفرصة *</label>
-            <input className="form-input" placeholder="مثال: تنظيف الحي" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <input name="title" id="title" className="form-input" placeholder="مثال: تنظيف الحي" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
           <div className="form-group">
             <label className="form-label">الوصف *</label>
@@ -62,21 +62,21 @@ export default function NewOpportunity() {
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">الموقع *</label>
-              <input className="form-input" placeholder="مثال: مدرسة الملك فهد" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              <input name="location" id="location" className="form-input" placeholder="مثال: مدرسة الملك فهد" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             </div>
             <div className="form-group">
               <label className="form-label">عدد الساعات *</label>
-              <input className="form-input" type="number" min="1" step="0.5" placeholder="مثال: 8" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
+              <input name="hours" id="hours" className="form-input" type="number" min="1" step="0.5" placeholder="مثال: 8" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
             </div>
           </div>
           <div className="form-group">
             <label className="form-label">المتطلبات (اختياري)</label>
-            <input className="form-input" placeholder="أي متطلبات خاصة" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
+            <input name="requirements" id="requirements" className="form-input" placeholder="أي متطلبات خاصة" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
           </div>
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">الحد الأقصى للمشاركين</label>
-              <input className="form-input" type="number" min="1" placeholder="اختياري" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
+              <input name="max_participants" id="max_participants" className="form-input" type="number" min="1" placeholder="اختياري" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
             </div>
           </div>
           <div className="grid-2">

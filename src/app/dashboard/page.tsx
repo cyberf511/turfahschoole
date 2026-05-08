@@ -11,35 +11,26 @@ export default async function DashboardPage() {
   }
   if (!user) redirect('/sign-in');
 
-  let supabase, profile;
-  try {
-    supabase = await createServerSupabase();
-    const result = await supabase
-      .from('profiles')
-      .select('role, profile_completed')
-      .eq('id', user.id)
-      .single();
-    profile = result.data;
-  } catch {
-    redirect('/');
-  }
+  const supabase = await createServerSupabase();
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, profile_completed')
+    .eq('id', user.id)
+    .single();
 
-  if (!profile) {
+  if (!profile || profileError) {
     redirect('/');
   }
 
   let currentRole = profile.role;
-  
-  // Auto-heal super_admin role if they created the account before the webhook update
+
   const allowedAdmins = (process.env.ADMIN_USERNAMES || 'superadmin,admin').split(',').map(s => s.trim().toLowerCase());
-  
+
   if (
-    currentRole !== 'super_admin' && 
+    currentRole !== 'super_admin' &&
     allowedAdmins.includes(user.username?.toLowerCase() || '')
   ) {
-    try {
-      await supabase!.from('profiles').update({ role: 'super_admin' }).eq('id', user.id);
-    } catch { /* non-critical auto-heal */ }
+    await supabase.from('profiles').update({ role: 'super_admin' }).eq('id', user.id);
     currentRole = 'super_admin';
   }
 
