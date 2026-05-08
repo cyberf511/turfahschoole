@@ -6,20 +6,14 @@ export default async function CoordinatorLayout({ children }: { children: React.
   const user = await currentUser();
   if (!user) redirect('/sign-in');
 
-  let role = (user.publicMetadata as Record<string, unknown> | undefined)?.role as string | undefined;
+  const supabase = await createServerSupabase();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
 
-  // Fallback: query Supabase if publicMetadata not set (legacy users)
-  if (!role) {
-    const supabase = await createServerSupabase();
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-    role = profile?.role;
-  }
-
-  if (!role || (role !== 'coordinator' && role !== 'super_admin')) {
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
         <div style={{ textAlign: 'center' }}>
