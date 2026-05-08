@@ -34,6 +34,7 @@ export default function SignInPage() {
                 color: 'var(--text-primary)',
                 borderRadius: 'var(--radius-md)',
               },
+              formFieldInputPlaceholder: { color: 'var(--text-tertiary)' },
               formButtonPrimary: {
                 background: 'var(--accent-primary)',
                 borderRadius: 'var(--radius-md)',
