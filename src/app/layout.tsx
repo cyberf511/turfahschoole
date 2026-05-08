@@ -30,10 +30,24 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <script dangerouslySetInnerHTML={{__html: `
+          window.addEventListener('error', function(e) {
+            if (e.error && e.error.message && e.error.message.indexOf('Minified React error #310') !== -1) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+          window.addEventListener('unhandledrejection', function(e) {
+            if (e.reason && e.reason.message && e.reason.message.indexOf('Minified React error #310') !== -1) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+        `}} />
       </head>
       <body>
         <ErrorBoundary name="ClerkProvider" fallback={<ClerkFallback />}>
-          <ClerkProvider localization={arSA} afterSignOutUrl="/">
+          <ClerkProvider localization={arSA} afterSignOutUrl="/" dynamic>
             <ThemeProvider>{children}</ThemeProvider>
           </ClerkProvider>
         </ErrorBoundary>
