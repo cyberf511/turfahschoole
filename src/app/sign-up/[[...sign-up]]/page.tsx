@@ -27,6 +27,7 @@ export default function SignUpPage() {
                 borderRadius: 'var(--radius-md)',
               },
               socialButtonsBlockButtonText: { color: 'var(--text-primary)' },
+              formFieldLabel: { color: 'var(--text-primary)' },
               formFieldInput: {
                 background: 'var(--bg-input)',
                 border: '1px solid var(--border)',
