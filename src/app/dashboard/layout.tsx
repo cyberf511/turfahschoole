@@ -8,10 +8,13 @@ import { getProfile } from '@/actions/profile';
 import type { Profile } from '@/types';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -22,23 +25,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .then((res) => {
         if (res.success && res.data) setProfile(res.data);
       })
-      .catch(() => {
-        // Profile fetch failed, user will see sidebar without profile
-      });
+      .catch(() => {});
     try {
       const saved = localStorage.getItem('sidebar-collapsed');
       if (saved === 'true') setSidebarCollapsed(true);
-    } catch {
-      // Storage unavailable
-    }
+    } catch {}
   }, []);
 
   const toggleCollapse = () => {
     setSidebarCollapsed((prev) => {
-      try { localStorage.setItem('sidebar-collapsed', String(!prev)); } catch { /* noop */ }
+      try { localStorage.setItem('sidebar-collapsed', String(!prev)); } catch {}
       return !prev;
     });
   };
+
+  if (!mounted) {
+    return (
+      <div className="dashboard-layout">
+        <div className="dashboard-main">
+          <main className="dashboard-content">{children}</main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`dashboard-layout ${sidebarCollapsed ? 'dashboard-layout--collapsed' : ''}`}>
