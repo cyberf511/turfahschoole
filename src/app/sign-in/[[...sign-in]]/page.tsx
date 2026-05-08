@@ -1,6 +1,12 @@
+'use client';
+
 import { SignIn } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function SignInPage() {
+  const { theme } = useTheme();
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -10,6 +16,7 @@ export default function SignInPage() {
         </div>
         <SignIn
           appearance={{
+            baseTheme: theme === 'dark' ? dark : undefined,
             elements: {
               rootBox: { width: '100%' },
               card: {
