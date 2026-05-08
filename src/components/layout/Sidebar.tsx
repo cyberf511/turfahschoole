@@ -1,10 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from '@/components/ThemeProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { Profile } from '@/types';
 
 interface SidebarProps {
@@ -51,6 +53,11 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
   const pathname = usePathname();
   const { theme } = useTheme();
   const role = profile?.role || 'student';
+  const userButtonAppearance = useMemo(() => ({
+    baseTheme: theme === 'dark' ? dark : undefined,
+    elements: { avatarBox: { width: '34px', height: '34px' } },
+  }), [theme]);
+
   const navItems = role === 'coordinator' || role === 'super_admin' ? coordinatorNav : studentNav;
   const sectionLabel = role === 'coordinator' || role === 'super_admin' ? 'المنسقة' : 'الطالبات';
   const roleLabel = role === 'coordinator' ? 'منسقة' : role === 'super_admin' ? 'مشرفة عامة' : 'طالبة';
@@ -144,14 +151,9 @@ export function Sidebar({ profile, isOpen, isCollapsed, onClose, onToggleCollaps
         {/* Footer */}
         <div className="sidebar__footer">
           <div className="sidebar__user">
-            <UserButton
-              appearance={{
-                baseTheme: theme === 'dark' ? dark : undefined,
-                elements: {
-                  avatarBox: { width: '34px', height: '34px' },
-                }
-              }}
-            />
+            <ErrorBoundary name="UserButton" fallback={<div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg-tertiary)' }} />}>
+              <UserButton appearance={userButtonAppearance} />
+            </ErrorBoundary>
             {!isCollapsed && (
               <div className="sidebar__user-info">
                 <div className="sidebar__user-name">{profile?.full_name || 'مستخدم'}</div>
