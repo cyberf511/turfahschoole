@@ -3,15 +3,26 @@ import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 
 export default async function DashboardPage() {
-  const user = await currentUser();
+  let user;
+  try {
+    user = await currentUser();
+  } catch {
+    redirect('/sign-in');
+  }
   if (!user) redirect('/sign-in');
 
-  const supabase = await createServerSupabase();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, profile_completed')
-    .eq('id', user.id)
-    .single();
+  let supabase, profile;
+  try {
+    supabase = await createServerSupabase();
+    const result = await supabase
+      .from('profiles')
+      .select('role, profile_completed')
+      .eq('id', user.id)
+      .single();
+    profile = result.data;
+  } catch {
+    redirect('/');
+  }
 
   if (!profile) {
     redirect('/');
@@ -20,13 +31,15 @@ export default async function DashboardPage() {
   let currentRole = profile.role;
   
   // Auto-heal super_admin role if they created the account before the webhook update
-  const allowedAdmins = ['admin', 'super_admin', 'superadmin'];
+  const allowedAdmins = (process.env.ADMIN_USERNAMES || 'superadmin,admin').split(',').map(s => s.trim().toLowerCase());
   
   if (
     currentRole !== 'super_admin' && 
     allowedAdmins.includes(user.username?.toLowerCase() || '')
   ) {
-    await supabase.from('profiles').update({ role: 'super_admin' }).eq('id', user.id);
+    try {
+      await supabase!.from('profiles').update({ role: 'super_admin' }).eq('id', user.id);
+    } catch { /* non-critical auto-heal */ }
     currentRole = 'super_admin';
   }
 

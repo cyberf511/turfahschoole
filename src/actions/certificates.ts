@@ -35,6 +35,15 @@ export async function uploadCertificate(applicationId: string, certificatePath: 
     .eq('id', applicationId);
 
   if (error) return { success: false, error: 'فشل في تحديث حالة الشهادة' };
+
+  const supabaseAudit = await createServerSupabase();
+  await supabaseAudit.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'UPLOAD_CERTIFICATE',
+    description: `تم رفع شهادة للطلب: ${applicationId}`,
+    target_id: applicationId,
+  });
+
   return { success: true };
 }
 
@@ -98,7 +107,7 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
     return { success: false, error: 'غير مصرح' };
   }
 
-  const verificationCode = crypto.randomBytes(6).toString('hex').slice(0, 12).toUpperCase();
+  const verificationCode = crypto.randomBytes(8).toString('hex').toUpperCase();
 
   const { data: app, error } = await supabase
     .from('applications')
@@ -113,6 +122,13 @@ export async function verifyCertificate(applicationId: string): Promise<ActionRe
     .single();
 
   if (error) return { success: false, error: 'فشل في توثيق الشهادة' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'VERIFY_CERTIFICATE',
+    description: `تم توثيق شهادة للطلب: ${applicationId}`,
+    target_id: applicationId,
+  });
 
   if (app) {
     const oppTitle = ((app.opportunity as unknown) as { title: string })?.title || '';
@@ -148,15 +164,14 @@ export async function getSignedUploadUrl(fileName: string): Promise<ActionRespon
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  // Use admin client to bypass Storage RLS since we already authenticated the user via Clerk
-  const adminSupabase = createAdminSupabase();
-  
-  // Sanitize filename to avoid Signed URL and RLS extension policy mismatch due to spaces/arabic characters
+  const supabase = await createServerSupabase();
+
+  // Verify the application is in approved status before allowing upload
   const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
   const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '').replace(`.${extension}`, '') || 'cert';
   const filePath = `${user.id}/${Date.now()}-${safeName}.${extension}`;
 
-  const { data, error } = await adminSupabase.storage
+  const { data, error } = await supabase.storage
     .from('certificates')
     .createSignedUploadUrl(filePath);
 
@@ -171,8 +186,18 @@ export async function getSignedDownloadUrl(path: string): Promise<ActionResponse
   const user = await currentUser();
   if (!user) return { success: false, error: 'غير مصرح' };
 
-  const adminSupabase = createAdminSupabase();
-  const { data, error } = await adminSupabase.storage
+  // Verify ownership: path format is {userId}/{timestamp}-{name}.{ext}
+  const pathUserId = path.split('/')[0];
+  if (pathUserId !== user.id) {
+    const supabase = await createServerSupabase();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+      return { success: false, error: 'غير مصرح' };
+    }
+  }
+
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.storage
     .from('certificates')
     .createSignedUrl(path, 3600); // 1 hour
 
@@ -188,6 +213,10 @@ export async function createExternalCertificateApplication(hours: number, title:
   if (!user) return { success: false, error: 'غير مصرح' };
 
   const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || profile.role !== 'student') {
+    return { success: false, error: 'غير مصرح - هذه الخدمة للطالبات فقط' };
+  }
 
   // 1. Create a hidden custom opportunity for these specific hours
   const { data: opp, error: oppError } = await supabase

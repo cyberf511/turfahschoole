@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import type { Metadata } from 'next';
 
@@ -8,14 +8,19 @@ export const metadata: Metadata = {
 };
 
 export default async function CertificatePage({ params }: { params: { id: string } }) {
-  const supabase = createAdminSupabase();
+  // Validate verification code format (16 hex characters)
+  if (!/^[A-F0-9]{16}$/i.test(params.id)) {
+    notFound();
+  }
+
+  const supabase = await createServerSupabase();
 
   const { data: app } = await supabase
     .from('applications')
     .select(`
       id,
       verified_at,
-      student:profiles!student_id(full_name, national_id),
+      student:profiles!student_id(full_name, national_id_last3),
       opportunity:opportunities!opportunity_id(title, hours, location)
     `)
     .eq('verification_code', params.id.toUpperCase())
@@ -29,7 +34,7 @@ export default async function CertificatePage({ params }: { params: { id: string
   const student = app.student as any;
   const opp = app.opportunity as any;
   const issueDate = formatDate(app.verified_at || new Date().toISOString());
-  const nationalId = student?.national_id ? `****${student.national_id.slice(-4)}` : '—';
+  const nationalId = student?.national_id_last3 ? `*******${student.national_id_last3}` : '—';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Cairo', sans-serif" }}>

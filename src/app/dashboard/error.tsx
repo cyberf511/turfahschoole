@@ -38,21 +38,23 @@ export default function DashboardError({
           لقد واجهنا مشكلة أثناء تحميل هذه الصفحة. قد يكون ذلك بسبب تحديثات في النظام أو انقطاع في الاتصال.
         </p>
 
-        {/* Error Details for Debugging */}
-        <div style={{ 
-          background: 'var(--bg-secondary)', 
-          padding: '16px', 
-          borderRadius: 'var(--radius-sm)', 
-          border: '1px solid var(--border)',
-          marginBottom: '32px',
-          textAlign: 'left',
-          direction: 'ltr',
-          fontSize: '0.85rem',
-          color: 'var(--text-tertiary)',
-          overflowX: 'auto'
-        }}>
-          <code>{error.message || 'Unknown Runtime Error'}</code>
-        </div>
+        {/* Error details shown only in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ 
+            background: 'var(--bg-secondary)', 
+            padding: '16px', 
+            borderRadius: 'var(--radius-sm)', 
+            border: '1px solid var(--border)',
+            marginBottom: '32px',
+            textAlign: 'left',
+            direction: 'ltr',
+            fontSize: '0.85rem',
+            color: 'var(--text-tertiary)',
+            overflowX: 'auto'
+          }}>
+            <code>{error.message || 'Unknown Runtime Error'}</code>
+          </div>
+        )}
 
         <div className="flex-center" style={{ gap: '16px' }}>
           <button 

@@ -5,7 +5,7 @@
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
-const IV_LENGTH = 16;
+const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
 function getKey(): Buffer {
@@ -33,29 +33,51 @@ export function encrypt(plaintext: string): string {
   return `${iv.toString('hex')}:${encrypted}:${tag.toString('hex')}`;
 }
 
+export function encryptWithAAD(plaintext: string, aad: string): string {
+  const key = getKey();
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  cipher.setAAD(Buffer.from(aad, 'utf8'));
+
+  let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+
+  const tag = cipher.getAuthTag();
+
+  return `${iv.toString('hex')}:${encrypted}:${tag.toString('hex')}:${Buffer.from(aad, 'utf8').toString('hex')}`;
+}
+
 /**
  * Decrypts an AES-256-GCM encrypted string.
  * Expects format: iv:ciphertext:tag (all hex-encoded)
  */
 export function decrypt(encryptedData: string): string {
-  const key = getKey();
-  const parts = encryptedData.split(':');
+  try {
+    const key = getKey();
+    const parts = encryptedData.split(':');
 
-  if (parts.length !== 3) {
-    throw new Error('Invalid encrypted data format');
+    if (parts.length !== 3 && parts.length !== 4) {
+      throw new Error('Invalid encrypted data format');
+    }
+
+    const iv = Buffer.from(parts[0], 'hex');
+    const ciphertext = parts[1];
+    const tag = Buffer.from(parts[2], 'hex');
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAuthTag(tag);
+
+    if (parts.length === 4) {
+      decipher.setAAD(Buffer.from(parts[3], 'hex'));
+    }
+
+    let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
+  } catch (err) {
+    throw new Error('فشل في فك تشفير البيانات');
   }
-
-  const iv = Buffer.from(parts[0], 'hex');
-  const ciphertext = parts[1];
-  const tag = Buffer.from(parts[2], 'hex');
-
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(tag);
-
-  let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
-  return decrypted;
 }
 
 /**

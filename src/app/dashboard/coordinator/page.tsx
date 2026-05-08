@@ -13,6 +13,17 @@ export default function CoordinatorDashboard() {
   const loading = !res && !error;
 
   if (loading) return <Loading />;
+  if (error) return (
+    <div className="animate-slide-up" style={{ textAlign: 'center', padding: '60px 24px' }}>
+      <div className="empty-state">
+        <div className="empty-state__title">حدث خطأ في تحميل البيانات</div>
+        <div className="empty-state__desc">يرجى المحاولة مرة أخرى</div>
+        <button className="btn btn--primary" style={{ marginTop: '16px' }} onClick={() => window.location.reload()}>
+          إعادة المحاولة
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="animate-slide-up">

@@ -14,11 +14,21 @@ interface CreateNotificationInput {
 }
 
 export async function createNotification(input: CreateNotificationInput): Promise<ActionResponse> {
+  const user = await currentUser();
+  if (!user) return { success: false, error: 'غير مصرح' };
+
   const validated = NotificationSchema.safeParse(input);
   if (!validated.success) return { success: false, error: 'بيانات غير صالحة' };
   const validData = validated.data;
 
   const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+
+  // Only allow creating notifications for yourself, or if you're a coordinator/super_admin
+  if (validData.userId !== user.id && (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin'))) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
   const { error } = await supabase.from('notifications').insert({
     user_id: validData.userId,
     title: validData.title,

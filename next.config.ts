@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
+        hostname: 'lytjrklqfdvejycowfxb.supabase.co',
       },
     ],
   },
@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
             value: 'DENY',
           },
           {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
             key: 'X-XSS-Protection',
             value: '0',
           },
@@ -43,7 +47,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.com https://challenges.cloudflare.com",
+              "script-src 'self' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.com https://challenges.cloudflare.com 'strict-dynamic'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' blob: data: https://img.clerk.com https://*.supabase.co",
               "font-src 'self' https://fonts.gstatic.com",
@@ -53,6 +57,7 @@ const nextConfig: NextConfig = {
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "frame-ancestors 'none'",
               "upgrade-insecure-requests",
             ].join('; '),
           },

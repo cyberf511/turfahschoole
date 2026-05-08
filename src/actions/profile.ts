@@ -21,7 +21,8 @@ export async function getProfile(): Promise<ActionResponse<Profile>> {
     // If not found, create a minimal profile
     if (error.code === 'PGRST116') {
       const email = user.emailAddresses[0]?.emailAddress || '';
-      const role = user.username?.toLowerCase() === 'superadmin' ? 'super_admin' : 'student';
+      const adminUsernames = (process.env.ADMIN_USERNAMES || 'superadmin,admin').split(',').map(s => s.trim().toLowerCase());
+      const role = adminUsernames.includes(user.username?.toLowerCase() || '') ? 'super_admin' : 'student';
 
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
@@ -72,6 +73,13 @@ export async function completeProfile(formData: ProfileFormData): Promise<Action
     .eq('id', user.id);
 
   if (error) return { success: false, error: 'فشل في حفظ البيانات' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'COMPLETE_PROFILE',
+    description: 'تم إكمال الملف الشخصي',
+  });
+
   return { success: true };
 }
 
@@ -96,5 +104,12 @@ export async function updateProfile(data: Partial<ProfileFormData>): Promise<Act
 
   const { error } = await supabase.from('profiles').update(updateData).eq('id', user.id);
   if (error) return { success: false, error: 'فشل في تحديث البيانات' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'UPDATE_PROFILE',
+    description: 'تم تحديث الملف الشخصي',
+  });
+
   return { success: true };
 }

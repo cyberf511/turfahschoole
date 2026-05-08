@@ -50,6 +50,18 @@ export default function StudentDashboard() {
   });
 
   if (isLoading || (!data && !error)) return <PageLoader />;
+  if (error) return (
+    <div className="dash-page" style={{ textAlign: 'center', padding: '60px 24px' }}>
+      <div className="empty-state">
+        <div className="empty-state__icon" style={{ color: 'var(--danger)' }}><Icons.x /></div>
+        <div className="empty-state__title">حدث خطأ في تحميل البيانات</div>
+        <div className="empty-state__desc">يرجى المحاولة مرة أخرى</div>
+        <button className="btn btn--primary" style={{ marginTop: '16px' }} onClick={() => window.location.reload()}>
+          إعادة المحاولة
+        </button>
+      </div>
+    </div>
+  );
 
   const applications = data?.applications || [];
   const opportunities = data?.opportunities || [];

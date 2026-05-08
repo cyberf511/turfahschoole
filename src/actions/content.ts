@@ -90,6 +90,13 @@ export async function createContent(input: {
   });
 
   if (error) return { success: false, error: 'فشل في إنشاء المحتوى' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'CREATE_CONTENT',
+    description: `تم إنشاء محتوى: ${validData.type}`,
+  });
+
   return { success: true };
 }
 
@@ -120,6 +127,14 @@ export async function updateContent(id: string, input: {
     .eq('id', id);
 
   if (error) return { success: false, error: 'فشل في تحديث المحتوى' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'UPDATE_CONTENT',
+    description: `تم تحديث محتوى: ${id}`,
+    target_id: id,
+  });
+
   return { success: true };
 }
 
@@ -135,6 +150,14 @@ export async function deleteContent(id: string): Promise<ActionResponse> {
 
   const { error } = await supabase.from('site_content').delete().eq('id', id);
   if (error) return { success: false, error: 'فشل في حذف المحتوى' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'DELETE_CONTENT',
+    description: `تم حذف محتوى: ${id}`,
+    target_id: id,
+  });
+
   return { success: true };
 }
 
@@ -143,6 +166,11 @@ export async function getContentUploadUrl(fileName: string): Promise<ActionRespo
   if (!user) return { success: false, error: 'غير مصرح' };
 
   const supabase = await createServerSupabase();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'coordinator' && profile.role !== 'super_admin')) {
+    return { success: false, error: 'غير مصرح' };
+  }
+
   const filePath = `site-content/${Date.now()}-${fileName}`;
 
   const { data, error } = await supabase.storage

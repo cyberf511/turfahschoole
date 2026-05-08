@@ -4,7 +4,8 @@ import crypto from 'crypto';
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { encrypt, decrypt, getLastThreeDigits } from '@/lib/encryption';
+import { encrypt, getLastThreeDigits } from '@/lib/encryption';
+import { PreRegisteredStudentSchema } from '@/lib/validations';
 import type { ActionResponse } from '@/types';
 
 export interface PreRegisteredStudent {
@@ -14,6 +15,10 @@ export interface PreRegisteredStudent {
   national_id: string;
   phone?: string;
   education_level?: string;
+}
+
+function hashNationalId(nationalId: string): string {
+  return crypto.createHash('sha256').update(nationalId.trim()).digest('hex');
 }
 
 export async function addPreRegisteredStudent(student: PreRegisteredStudent): Promise<ActionResponse> {
@@ -26,38 +31,33 @@ export async function addPreRegisteredStudent(student: PreRegisteredStudent): Pr
     return { success: false, error: 'غير مصرح' };
   }
 
-  if (!student.national_id || student.national_id.trim() === '') {
-    return { success: false, error: 'رقم الهوية مطلوب' };
-  }
+  const validated = PreRegisteredStudentSchema.safeParse(student);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة: ' + validated.error.issues[0]?.message };
+  const validData = validated.data;
 
   const adminSupabase = createAdminSupabase();
+  const nationalIdHash = hashNationalId(validData.national_id);
 
-  const { data: existingRecords } = await adminSupabase
+  const { data: existing } = await adminSupabase
     .from('pre_registered_students')
-    .select('national_id_encrypted');
+    .select('id')
+    .eq('national_id_hash', nationalIdHash)
+    .maybeSingle();
 
-  if (existingRecords && existingRecords.length > 0) {
-    for (const record of existingRecords) {
-      try {
-        const decryptedId = decrypt(record.national_id_encrypted);
-        if (decryptedId === student.national_id.trim()) {
-          return { success: false, error: 'رقم الهوية مسجل مسبقاً' };
-        }
-      } catch {
-        // Skip records that can't be decrypted
-      }
-    }
+  if (existing) {
+    return { success: false, error: 'رقم الهوية مسجل مسبقاً' };
   }
 
   const { error } = await adminSupabase
     .from('pre_registered_students')
     .insert({
-      email: student.email.toLowerCase().trim(),
-      full_name: student.full_name,
-      national_id_encrypted: encrypt(student.national_id.trim()),
-      national_id_last3: getLastThreeDigits(student.national_id.trim()),
-      phone: student.phone || null,
-      education_level: student.education_level || 'first_secondary'
+      email: validData.email.toLowerCase().trim(),
+      full_name: validData.full_name,
+      national_id_encrypted: encrypt(validData.national_id.trim()),
+      national_id_last3: getLastThreeDigits(validData.national_id.trim()),
+      national_id_hash: nationalIdHash,
+      phone: validData.phone || null,
+      education_level: validData.education_level || 'first_secondary'
     });
 
   if (error) {
@@ -71,8 +71,8 @@ export async function addPreRegisteredStudent(student: PreRegisteredStudent): Pr
   await adminSupabase.from('audit_logs').insert({
     admin_id: user.id,
     action_type: 'ADD_STUDENT',
-    description: `تم إضافة طالبة: ${student.full_name}`,
-    target_email: student.email.toLowerCase().trim(),
+    description: `تم إضافة طالبة: ${validData.full_name}`,
+    target_email: validData.email.toLowerCase().trim(),
   });
 
   return { success: true };
@@ -94,48 +94,59 @@ export async function bulkPreRegisterStudents(students: PreRegisteredStudent[]):
     return { success: false, error: 'لم يتم العثور على طالبات في الملف' };
   }
 
-  const missingNationalId = students.find(s => !s.national_id || s.national_id.trim() === '');
-  if (missingNationalId) {
-    return { success: false, error: 'رقم الهوية مطلوب لجميع الطالبات. يرجى التأكد من تعبئة العمود في ملف الإكسل' };
+  if (students.length > 2000) {
+    return { success: false, error: 'الحد الأقصى 2000 طالبة لكل رفع' };
+  }
+
+  // Validate all rows with Zod first
+  const validationErrors: string[] = [];
+  const validStudents: PreRegisteredStudent[] = [];
+  for (let i = 0; i < students.length; i++) {
+    const result = PreRegisteredStudentSchema.safeParse(students[i]);
+    if (result.success) {
+      validStudents.push(result.data as PreRegisteredStudent);
+    } else {
+      validationErrors.push(`الطالبة ${i + 1}: ${result.error.issues[0]?.message}`);
+    }
+  }
+  if (validationErrors.length > 0) {
+    return { success: false, error: `أخطاء في التحقق من البيانات:\n${validationErrors.slice(0, 5).join('\n')}` };
   }
 
   const adminSupabase = createAdminSupabase();
 
+  // Check duplicates via hash
+  const existingHashes = new Set<string>();
   const { data: existingRecords } = await adminSupabase
     .from('pre_registered_students')
-    .select('national_id_encrypted');
-
-  if (existingRecords && existingRecords.length > 0) {
-    const existingDecrypted = new Set<string>();
+    .select('national_id_hash');
+  if (existingRecords) {
     for (const record of existingRecords) {
-      try {
-        const decrypted = decrypt(record.national_id_encrypted);
-        existingDecrypted.add(decrypted);
-      } catch {
-        // Skip records that can't be decrypted
-      }
-    }
-    
-    const duplicateInDb = students.find(s => existingDecrypted.has(s.national_id.trim()));
-    if (duplicateInDb) {
-      return { success: false, error: `رقم الهوية "${duplicateInDb.national_id}" مسجل مسبقاً لطالبة موجودة` };
+      if (record.national_id_hash) existingHashes.add(record.national_id_hash);
     }
   }
 
-  const idsInFile = students.map(s => s.national_id.trim());
+  const idsInFile = validStudents.map(s => s.national_id.trim());
   const uniqueIdsInFile = new Set(idsInFile);
-  if (uniqueIdsInFile.size !== students.length) {
+  if (uniqueIdsInFile.size !== validStudents.length) {
     return { success: false, error: 'يوجد تكرار في أرقام الهوية داخل الملف نفسه' };
+  }
+
+  for (const s of validStudents) {
+    if (existingHashes.has(hashNationalId(s.national_id))) {
+      return { success: false, error: `رقم الهوية "${s.national_id}" مسجل مسبقاً لطالبة موجودة` };
+    }
   }
 
   const { data, error } = await adminSupabase
     .from('pre_registered_students')
     .upsert(
-      students.map(s => ({
+      validStudents.map(s => ({
         email: s.email.toLowerCase().trim(),
         full_name: s.full_name,
         national_id_encrypted: encrypt(s.national_id.trim()),
         national_id_last3: getLastThreeDigits(s.national_id.trim()),
+        national_id_hash: hashNationalId(s.national_id),
         phone: s.phone || null,
         education_level: s.education_level || 'first_secondary'
       })),
@@ -150,10 +161,10 @@ export async function bulkPreRegisterStudents(students: PreRegisteredStudent[]):
   await adminSupabase.from('audit_logs').insert({
     admin_id: user.id,
     action_type: 'BULK_ADD_STUDENTS',
-    description: `تم رفع ${students.length} طالبة عبر ملف الإكسل`,
+    description: `تم رفع ${validStudents.length} طالبة عبر ملف الإكسل`,
   });
 
-  return { success: true, data: { count: students.length } };
+  return { success: true, data: { count: validStudents.length } };
 }
 
 export async function getPreRegisteredStudents(): Promise<ActionResponse<PreRegisteredStudent[]>> {
@@ -174,23 +185,13 @@ export async function getPreRegisteredStudents(): Promise<ActionResponse<PreRegi
 
   if (error) return { success: false, error: 'فشل في جلب البيانات' };
 
-  // Decrypt national_id for display
-  const decryptedData = (data || []).map(item => {
-    let nationalId = '';
-    if (item.national_id_encrypted) {
-      try {
-        nationalId = decrypt(item.national_id_encrypted);
-      } catch {
-        nationalId = item.national_id_last3 || '';
-      }
-    } else if (item.national_id) {
-      // Backward compatibility
-      nationalId = item.national_id;
-    }
-    return { ...item, national_id: nationalId };
-  });
+  // Return masked national ID (last 3 digits only) instead of full decrypted value
+  const processedData = (data || []).map(item => ({
+    ...item,
+    national_id: item.national_id_last3 ? `*******${item.national_id_last3}` : '—'
+  }));
 
-  return { success: true, data: decryptedData };
+  return { success: true, data: processedData };
 }
 
 export async function updatePreRegisteredStudent(id: string, updates: Partial<PreRegisteredStudent>): Promise<ActionResponse> {
@@ -203,42 +204,36 @@ export async function updatePreRegisteredStudent(id: string, updates: Partial<Pr
     return { success: false, error: 'غير مصرح' };
   }
 
-  if (updates.national_id !== undefined && (!updates.national_id || updates.national_id.trim() === '')) {
-    return { success: false, error: 'رقم الهوية مطلوب' };
-  }
+  const validated = PreRegisteredStudentSchema.partial().safeParse(updates);
+  if (!validated.success) return { success: false, error: 'البيانات غير صالحة: ' + validated.error.issues[0]?.message };
+  const validData = validated.data;
 
   const adminSupabase = createAdminSupabase();
 
-  if (updates.national_id) {
-    // Check for duplicate by decrypting all records
-    const { data: existingRecords } = await adminSupabase
+  if (validData.national_id) {
+    const hash = hashNationalId(validData.national_id);
+    const { data: existing } = await adminSupabase
       .from('pre_registered_students')
-      .select('id, national_id_encrypted');
+      .select('id')
+      .eq('national_id_hash', hash)
+      .neq('id', id)
+      .maybeSingle();
 
-    if (existingRecords) {
-      for (const record of existingRecords) {
-        if (record.id === id) continue;
-        try {
-          const decrypted = decrypt(record.national_id_encrypted);
-          if (decrypted === updates.national_id.trim()) {
-            return { success: false, error: 'رقم الهوية مسجل مسبقاً لطالبة أخرى' };
-          }
-        } catch {
-          // Skip
-        }
-      }
+    if (existing) {
+      return { success: false, error: 'رقم الهوية مسجل مسبقاً لطالبة أخرى' };
     }
   }
 
   const updatePayload: Record<string, unknown> = {
-    email: updates.email?.toLowerCase().trim(),
-    full_name: updates.full_name,
-    phone: updates.phone || null,
+    email: validData.email?.toLowerCase().trim(),
+    full_name: validData.full_name,
+    phone: validData.phone || null,
   };
 
-  if (updates.national_id) {
-    updatePayload.national_id_encrypted = encrypt(updates.national_id.trim());
-    updatePayload.national_id_last3 = getLastThreeDigits(updates.national_id.trim());
+  if (validData.national_id) {
+    updatePayload.national_id_encrypted = encrypt(validData.national_id.trim());
+    updatePayload.national_id_last3 = getLastThreeDigits(validData.national_id.trim());
+    updatePayload.national_id_hash = hashNationalId(validData.national_id);
   }
 
   const { error } = await adminSupabase

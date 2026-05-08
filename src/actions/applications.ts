@@ -37,7 +37,12 @@ export async function getAllApplications(
 
   let query = supabase
     .from('applications')
-    .select('*, opportunity:opportunities(title, location, hours), student:profiles!student_id(full_name, email, avatar_url, phone, education_level, national_id_last3)', { count: 'exact' });
+    .select('*, opportunity:opportunities!inner(title, location, hours, created_by), student:profiles!student_id(full_name, email, avatar_url, phone, education_level, national_id_last3)', { count: 'exact' });
+
+  // Filter by coordinator's owned opportunities unless super_admin
+  if (profile.role !== 'super_admin') {
+    query = query.eq('opportunity.created_by', user.id);
+  }
 
   if (status && status !== 'all') query = query.eq('status', status);
 
@@ -106,6 +111,14 @@ export async function applyToOpportunity(opportunityId: string): Promise<ActionR
     }).catch(err => console.error('Failed to send application received email:', err));
   }
 
+  // Audit log
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'APPLY_TO_OPPORTUNITY',
+    description: `تقديم طلب لفرصة: ${opportunityId}`,
+    target_id: opportunityId,
+  });
+
   return { success: true };
 }
 
@@ -138,6 +151,14 @@ export async function reviewApplication(
 
   if (error) return { success: false, error: 'فشل في مراجعة الطلب' };
 
+  // Audit log
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: action === 'approve' ? 'APPROVE_APPLICATION' : 'REJECT_APPLICATION',
+    description: `تم ${action === 'approve' ? 'قبول' : 'رفض'} طلب: ${applicationId}`,
+    target_id: applicationId,
+  });
+
   // Send notification + email to student
   if (app) {
     const oppTitle = ((app.opportunity as unknown) as { title: string })?.title || '';
@@ -160,7 +181,7 @@ export async function reviewApplication(
       const template = action === 'approve'
         ? emailApproved(studentProfile.full_name || 'طالبة', oppTitle)
         : emailRejected(studentProfile.full_name || 'طالبة', oppTitle, reason);
-      sendEmail({ to: studentProfile.email, ...template }).catch(() => {});
+      sendEmail({ to: studentProfile.email, ...template }).catch(err => console.error('Failed to send review email:', err));
     }
   }
 

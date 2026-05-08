@@ -3,12 +3,22 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 function escapeHtml(str: string): string {
-  return str
+  return String(str)
+    .replace(/\r\n/g, ' ')
+    .replace(/\r/g, ' ')
+    .replace(/\n/g, ' ')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function validateHttpsUrl(url: string): string {
+  if (!url || !/^https:\/\//i.test(url)) {
+    return '#';
+  }
+  return url;
 }
 
 interface EmailParams {
@@ -128,7 +138,7 @@ export function emailCertificateVerified(studentName: string, oppTitle: string, 
         <p style="color:#374151;margin-top:20px;">لقد تم إصدار شهادة إنجاز رقمية خاصة بك تقديراً لجهودك. يمكنك عرضها وطباعتها من خلال الرابط أدناه:</p>
         
         <div style="text-align:center;margin:24px 0;">
-          <a href="${escapeHtml(certificateUrl)}" style="background-color:#059669;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">📜 عرض الشهادة الرقمية</a>
+          <a href="${validateHttpsUrl(certificateUrl)}" style="background-color:#059669;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;">📜 عرض الشهادة الرقمية</a>
         </div>
         
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">

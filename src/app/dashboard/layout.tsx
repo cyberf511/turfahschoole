@@ -18,17 +18,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   useEffect(() => {
-    getProfile().then((res) => {
-      if (res.success && res.data) setProfile(res.data);
-    });
-    // Restore collapse preference
-    const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved === 'true') setSidebarCollapsed(true);
+    getProfile()
+      .then((res) => {
+        if (res.success && res.data) setProfile(res.data);
+      })
+      .catch(() => {
+        // Profile fetch failed, user will see sidebar without profile
+      });
+    try {
+      const saved = localStorage.getItem('sidebar-collapsed');
+      if (saved === 'true') setSidebarCollapsed(true);
+    } catch {
+      // Storage unavailable
+    }
   }, []);
 
   const toggleCollapse = () => {
     setSidebarCollapsed((prev) => {
-      localStorage.setItem('sidebar-collapsed', String(!prev));
+      try { localStorage.setItem('sidebar-collapsed', String(!prev)); } catch { /* noop */ }
       return !prev;
     });
   };

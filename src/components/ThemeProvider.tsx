@@ -22,15 +22,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as Theme | null;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.setAttribute('data-theme', saved);
-    } else {
+    try {
+      const saved = localStorage.getItem('theme') as Theme | null;
+      if (saved) {
+        setTheme(saved);
+        document.documentElement.setAttribute('data-theme', saved);
+        return;
+      }
+    } catch {
+      // Storage unavailable (Safari private, sandboxed iframe, etc.)
+    }
+    try {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const detected = prefersDark ? 'dark' : 'light';
-      setTheme(detected);
-      document.documentElement.setAttribute('data-theme', detected);
+      setTheme(prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } catch {
+      // matchMedia unavailable
     }
   }, []);
 
@@ -38,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
+    try { localStorage.setItem('theme', next); } catch { /* noop */ }
   };
 
   return (

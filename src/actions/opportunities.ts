@@ -26,23 +26,33 @@ export async function getOpportunities(
   const { data, count, error } = await query;
   
   // Fetch stats for the opportunities dashboard using exact counts
+  // Filter by coordinator's owned opportunities unless they're browsing all
+  const { data: callerProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  const isSuperAdmin = callerProfile?.role === 'super_admin';
+
+  // Build stats queries with optional ownership filter
+  const statsQuery = supabase.from('opportunities');
+  const filteredStatsQuery = (!isSuperAdmin && !activeOnly)
+    ? (statsQuery as any).eq('created_by', user.id)
+    : statsQuery;
+
   const [
     { count: totalCount },
     { count: activeCount },
     { count: inactiveCount },
     { data: hoursData }
   ] = await Promise.all([
-    supabase.from('opportunities').select('*', { count: 'exact', head: true }),
-    supabase.from('opportunities').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('opportunities').select('*', { count: 'exact', head: true }).eq('is_active', false),
-    supabase.from('opportunities').select('hours')
+    filteredStatsQuery.select('*', { count: 'exact', head: true }),
+    filteredStatsQuery.select('*', { count: 'exact', head: true }).eq('is_active', true),
+    filteredStatsQuery.select('*', { count: 'exact', head: true }).eq('is_active', false),
+    filteredStatsQuery.select('hours')
   ]);
 
   const stats = {
     total: totalCount || 0,
     active: activeCount || 0,
     inactive: inactiveCount || 0,
-    totalHours: (hoursData || []).reduce((acc, curr) => acc + (curr.hours || 0), 0)
+    totalHours: (hoursData || []).reduce((acc: number, curr: any) => acc + (curr.hours || 0), 0)
   };
 
   if (error) return { success: false, error: 'فشل في تحميل الفرص' };
@@ -101,6 +111,13 @@ export async function createOpportunity(formData: OpportunityFormData): Promise<
   });
 
   if (error) return { success: false, error: 'فشل في إنشاء الفرصة' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'CREATE_OPPORTUNITY',
+    description: `تم إنشاء فرصة: ${validData.title}`,
+  });
+
   return { success: true };
 }
 
@@ -130,6 +147,14 @@ export async function updateOpportunity(id: string, formData: Partial<Opportunit
   }).eq('id', id);
 
   if (error) return { success: false, error: 'فشل في تحديث الفرصة' };
+
+  await supabase.from('audit_logs').insert({
+    admin_id: user.id,
+    action_type: 'UPDATE_OPPORTUNITY',
+    description: `تم تحديث فرصة: ${id}`,
+    target_id: id,
+  });
+
   return { success: true };
 }
 
