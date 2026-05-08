@@ -23,6 +23,7 @@ export default function CoordinatorStudents() {
   const [editingStudent, setEditingStudent] = useState<PreRegisteredStudent | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addModalError, setAddModalError] = useState('');
+  const [editModalError, setEditModalError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStudent, setNewStudent] = useState<Omit<PreRegisteredStudent, 'id'>>({
     email: '',
@@ -138,14 +139,14 @@ export default function CoordinatorStudents() {
     e.preventDefault();
     if (!editingStudent || !editingStudent.id) return;
     
+    setEditModalError('');
     setIsSubmitting(true);
     const res = await updatePreRegisteredStudent(editingStudent.id, editingStudent);
     if (res.success) {
-      setMessage({ type: 'success', text: 'تم تحديث بيانات الطالبة بنجاح' });
       setEditingStudent(null);
       mutate();
     } else {
-      setMessage({ type: 'error', text: res.error || 'حدث خطأ أثناء التحديث' });
+      setEditModalError(res.error || 'حدث خطأ أثناء التحديث');
     }
     setIsSubmitting(false);
   };
@@ -512,6 +513,11 @@ export default function CoordinatorStudents() {
             </div>
             <div className="modal__content">
               <form onSubmit={handleEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {editModalError && (
+                  <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>
+                    {editModalError}
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label">الاسم الكامل</label>
                   <input

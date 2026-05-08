@@ -8,6 +8,7 @@ import '@/styles/dashboard.css';
 import '@/styles/premium-dash.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ClerkFallback } from '@/components/ClerkFallback';
 
 export const metadata: Metadata = {
   title: 'منصة العمل التطوعي — ثانوية طرفة بنت عبدالعزيز',
@@ -31,7 +32,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <ErrorBoundary name="ClerkProvider">
+        <ErrorBoundary name="ClerkProvider" fallback={<ClerkFallback />}>
           <ClerkProvider localization={arSA} afterSignOutUrl="/">
             <ThemeProvider>{children}</ThemeProvider>
           </ClerkProvider>
