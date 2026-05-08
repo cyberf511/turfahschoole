@@ -1,6 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import type { ActionResponse, Profile, PaginatedResponse } from '@/types';
 
@@ -90,6 +90,16 @@ export async function updateUserRole(
       description: `تم تغيير دور المستخدم إلى ${newRole}`,
       target_id: targetUserId
     });
+
+    // Sync role change to Clerk publicMetadata for instant client-side access
+    try {
+      const client = await clerkClient();
+      await client.users.updateUser(targetUserId, {
+        publicMetadata: { role: newRole },
+      });
+    } catch (metaErr) {
+      console.error('Failed to update Clerk publicMetadata:', metaErr);
+    }
   }
 
   if (error) return { success: false, error: 'فشل في تحديث الدور' };

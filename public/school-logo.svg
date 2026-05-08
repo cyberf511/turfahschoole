@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#10b981"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer shield -->
+  <path d="M60 6 L110 34 L110 66 Q110 100 60 118 Q10 100 10 66 L10 34 Z" 
+        fill="url(#g)" stroke="#047857" stroke-width="2"/>
+  
+  <!-- Inner shield -->
+  <path d="M60 16 L98 38 L98 64 Q98 92 60 108 Q22 92 22 64 L22 38 Z" 
+        fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  
+  <!-- Open book -->
+  <path d="M38 50 Q38 42 48 42 L60 48 L72 42 Q82 42 82 50 L82 78 Q82 84 60 90 Q38 84 38 78 Z" 
+        fill="none" stroke="#059669" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M60 48 L60 90" stroke="#059669" stroke-width="2"/>
+  
+  <!-- Book pages left -->
+  <path d="M38 50 Q44 56 60 58" fill="none" stroke="#059669" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Star above book -->
+  <polygon points="60,28 63,36 72,36 65,42 68,50 60,45 52,50 55,42 48,36 57,36" 
+           fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="38" cy="72" r="1.5" fill="#d1d5db"/>
+  <circle cx="82" cy="72" r="1.5" fill="#d1d5db"/>
+  <circle cx="42" cy="68" r="1.5" fill="#d1d5db"/>
+  <circle cx="78" cy="68" r="1.5" fill="#d1d5db"/>
+  
+  <!-- Bottom text arc lines -->
+  <path d="M30 93 Q60 102 90 93" fill="none" stroke="#059669" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M34 97 Q60 105 86 97" fill="none" stroke="#059669" stroke-width="1" stroke-linecap="round"/>
+</svg>

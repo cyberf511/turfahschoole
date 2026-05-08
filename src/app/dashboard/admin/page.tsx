@@ -136,6 +136,8 @@ export default function AdminPage() {
       <div className="card" style={{ marginBottom: '24px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-secondary)' }}>
         <span style={{ color: 'var(--text-tertiary)' }}><Icons.search /></span>
         <input
+          id="search-users"
+          name="search"
           className="form-input"
           placeholder="ابحث باستخدام الاسم أو البريد الإلكتروني..."
           value={search}

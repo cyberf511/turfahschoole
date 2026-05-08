@@ -102,7 +102,7 @@ export default function StudentCertificates() {
         </button>
       </div>
 
-      <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleUpload} />
+      <input ref={fileRef} id="certificate-file" name="certificate_file" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleUpload} />
 
       {message.text && (
         <div className={`toast toast--${message.type === 'success' ? 'success' : 'error'}`} style={{ position: 'static', marginBottom: '16px' }}>
@@ -186,6 +186,8 @@ export default function StudentCertificates() {
               <div className="form-group">
                 <label className="form-label">عدد الساعات التطوعية</label>
                 <input 
+                  id="external-hours"
+                  name="external_hours"
                   type="number" 
                   className="form-input" 
                   placeholder="مثال: 10" 

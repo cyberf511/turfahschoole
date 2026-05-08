@@ -85,11 +85,13 @@ export default async function CertificatePage({ params }: { params: { id: string
 
           {/* Header */}
           <div style={{ marginBottom: '40px', position: 'relative', zIndex: 1 }}>
-            <div style={{ width: '80px', height: '80px', background: '#ecfdf5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#10b981' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '16px' }}>
+              <img src="/school-logo.svg" alt="شعار المدرسة" width="64" height="64" style={{ display: 'block' }} />
+              <div>
+                <h1 style={{ color: '#10b981', fontSize: '2.5rem', margin: '0 0 8px 0', fontWeight: 800 }}>شهادة شكر وتقدير</h1>
+                <p style={{ color: '#6b7280', fontSize: '1.2rem', margin: 0 }}>Certificate of Appreciation</p>
+              </div>
             </div>
-            <h1 style={{ color: '#10b981', fontSize: '2.5rem', margin: '0 0 8px 0', fontWeight: 800 }}>شهادة شكر وتقدير</h1>
-            <p style={{ color: '#6b7280', fontSize: '1.2rem', margin: 0 }}>Certificate of Appreciation</p>
           </div>
 
           {/* Body */}

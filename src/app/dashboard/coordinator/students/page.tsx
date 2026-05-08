@@ -280,7 +280,7 @@ export default function CoordinatorStudents() {
           </button>
           <label className="btn btn--primary" style={{ cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }}>
             {isUploading ? 'جاري الرفع...' : '+ رفع ملف إكسل'}
-            <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} disabled={isUploading} />
+            <input type="file" id="file-upload" name="file-upload" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} disabled={isUploading} />
           </label>
         </div>
       </div>
@@ -319,8 +319,8 @@ export default function CoordinatorStudents() {
             <table className="data-table">
               <thead style={{ background: 'var(--bg-tertiary)' }}>
                 <tr>
-                  <th style={{ padding: '16px 20px', width: '40px' }}>
-                    <input type="checkbox" checked={students.length > 0 && selectedIds.size === students.length} onChange={toggleAll} />
+                    <th style={{ padding: '16px 20px', width: '40px' }}>
+                    <input type="checkbox" id="select-all-students" name="select-all-students" checked={students.length > 0 && selectedIds.size === students.length} onChange={toggleAll} />
                   </th>
                   <th style={{ width: '40px', textAlign: 'center', padding: '16px 20px' }}>#</th>
                   <th style={{ padding: '16px 20px' }}>البريد الإلكتروني</th>
@@ -334,7 +334,7 @@ export default function CoordinatorStudents() {
                 {students.map((student, idx) => (
                   <tr key={student.id} style={{ background: student.id && selectedIds.has(student.id) ? 'var(--accent-primary-soft)' : 'transparent' }}>
                     <td style={{ padding: '16px 20px' }}>
-                      <input type="checkbox" checked={student.id ? selectedIds.has(student.id) : false} onChange={() => student.id && toggleSelection(student.id)} />
+                      <input type="checkbox" id={`select-student-${student.id}`} name="select-student" checked={student.id ? selectedIds.has(student.id) : false} onChange={() => student.id && toggleSelection(student.id)} />
                     </td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-tertiary)', padding: '16px 20px' }}>{idx + 1}</td>
                     <td style={{ textAlign: 'right', padding: '16px 20px' }}>
@@ -432,9 +432,11 @@ export default function CoordinatorStudents() {
                   </div>
                 )}
                 <div className="form-group">
-                  <label className="form-label">الاسم الرباعي</label>
+                  <label className="form-label" htmlFor="add-full-name">الاسم الرباعي</label>
                   <input
                     type="text"
+                    id="add-full-name"
+                    name="full_name"
                     className="form-input"
                     value={newStudent.full_name}
                     onChange={e => setNewStudent({ ...newStudent, full_name: e.target.value })}
@@ -443,9 +445,11 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">البريد الإلكتروني</label>
+                  <label className="form-label" htmlFor="add-email">البريد الإلكتروني</label>
                   <input
                     type="email"
+                    id="add-email"
+                    name="email"
                     className="form-input"
                     value={newStudent.email}
                     onChange={e => setNewStudent({ ...newStudent, email: e.target.value })}
@@ -455,9 +459,11 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">رقم الجوال</label>
+                  <label className="form-label" htmlFor="add-phone">رقم الجوال</label>
                   <input
                     type="text"
+                    id="add-phone"
+                    name="phone"
                     className="form-input"
                     value={newStudent.phone}
                     onChange={e => setNewStudent({ ...newStudent, phone: e.target.value })}
@@ -466,9 +472,11 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">رقم الهوية</label>
+                  <label className="form-label" htmlFor="add-national-id">رقم الهوية</label>
                   <input
                     type="text"
+                    id="add-national-id"
+                    name="national_id"
                     className="form-input"
                     value={newStudent.national_id}
                     onChange={e => setNewStudent({ ...newStudent, national_id: e.target.value })}
@@ -478,8 +486,10 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">المرحلة الدراسية</label>
+                  <label className="form-label" htmlFor="add-education-level">المرحلة الدراسية</label>
                   <select
+                    id="add-education-level"
+                    name="education_level"
                     className="form-input"
                     value={newStudent.education_level}
                     onChange={e => setNewStudent({ ...newStudent, education_level: e.target.value })}
@@ -519,9 +529,11 @@ export default function CoordinatorStudents() {
                   </div>
                 )}
                 <div className="form-group">
-                  <label className="form-label">الاسم الكامل</label>
+                  <label className="form-label" htmlFor="edit-full-name">الاسم الكامل</label>
                   <input
                     type="text"
+                    id="edit-full-name"
+                    name="full_name"
                     className="form-input"
                     value={editingStudent.full_name}
                     onChange={e => setEditingStudent({ ...editingStudent, full_name: e.target.value })}
@@ -529,9 +541,11 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">البريد الإلكتروني</label>
+                  <label className="form-label" htmlFor="edit-email">البريد الإلكتروني</label>
                   <input
                     type="email"
+                    id="edit-email"
+                    name="email"
                     className="form-input"
                     value={editingStudent.email}
                     onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
@@ -539,18 +553,22 @@ export default function CoordinatorStudents() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">رقم الجوال</label>
+                  <label className="form-label" htmlFor="edit-phone">رقم الجوال</label>
                   <input
                     type="text"
+                    id="edit-phone"
+                    name="phone"
                     className="form-input"
                     value={editingStudent.phone || ''}
                     onChange={e => setEditingStudent({ ...editingStudent, phone: e.target.value })}
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">رقم الهوية</label>
+                  <label className="form-label" htmlFor="edit-national-id">رقم الهوية</label>
                   <input
                     type="text"
+                    id="edit-national-id"
+                    name="national_id"
                     className="form-input"
                     value={editingStudent.national_id || ''}
                     onChange={e => setEditingStudent({ ...editingStudent, national_id: e.target.value })}

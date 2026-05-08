@@ -1,6 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { encrypt, getLastThreeDigits } from '@/lib/encryption';
 import { ProfileSchema, ProfileUpdateSchema } from '@/lib/validations';
@@ -38,6 +38,14 @@ export async function getProfile(): Promise<ActionResponse<Profile>> {
         .single();
 
       if (createError) return { success: false, error: 'فشل في إنشاء الملف الشخصي' };
+
+      try {
+        const client = await clerkClient();
+        await client.users.updateUser(user.id, {
+          publicMetadata: { role, profileCompleted: false },
+        });
+      } catch {}
+
       return { success: true, data: newProfile };
     }
     return { success: false, error: 'فشل في تحميل الملف الشخصي' };
@@ -73,6 +81,13 @@ export async function completeProfile(formData: ProfileFormData): Promise<Action
     .eq('id', user.id);
 
   if (error) return { success: false, error: 'فشل في حفظ البيانات' };
+
+  try {
+    const client = await clerkClient();
+    await client.users.updateUser(user.id, {
+      publicMetadata: { profileCompleted: true },
+    });
+  } catch {}
 
   await supabase.from('audit_logs').insert({
     admin_id: user.id,

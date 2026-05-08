@@ -57,7 +57,7 @@ export default function NewOpportunity() {
           </div>
           <div className="form-group">
             <label className="form-label">الوصف *</label>
-            <textarea className="form-input" placeholder="وصف تفصيلي للفرصة التطوعية" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea name="description" id="description" className="form-input" placeholder="وصف تفصيلي للفرصة التطوعية" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <div className="grid-2">
             <div className="form-group">
@@ -82,11 +82,11 @@ export default function NewOpportunity() {
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">تاريخ البداية</label>
-              <input className="form-input" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+              <input name="start_date" id="start_date" className="form-input" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             </div>
             <div className="form-group">
               <label className="form-label">تاريخ النهاية</label>
-              <input className="form-input" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+              <input name="end_date" id="end_date" className="form-input" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
             </div>
           </div>
           {error && <div className="form-error" style={{ padding: '10px', background: 'var(--danger-soft)', borderRadius: 'var(--radius-md)' }}>{error}</div>}

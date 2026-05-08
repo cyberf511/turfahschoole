@@ -189,7 +189,7 @@ export default function ContentManagement() {
             <div className="grid-2">
               <div className="form-group">
                 <label className="form-label">نوع المحتوى</label>
-                <select className="form-input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as SiteContent['type'] })} disabled={!!editingId}>
+                <select id="content-type" name="type" className="form-input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as SiteContent['type'] })} disabled={!!editingId}>
                   {TYPE_OPTIONS.map((t) => (
                     <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                   ))}
@@ -197,21 +197,21 @@ export default function ContentManagement() {
               </div>
               <div className="form-group">
                 <label className="form-label">ترتيب العرض</label>
-                <input className="form-input" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} dir="ltr" style={{ textAlign: 'right' }} />
+                <input id="content-sort-order" name="sort_order" className="form-input" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} dir="ltr" style={{ textAlign: 'right' }} />
               </div>
             </div>
 
             {needsTitle && (
               <div className="form-group">
                 <label className="form-label">العنوان</label>
-                <input className="form-input" placeholder="أدخل العنوان" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <input id="content-title" name="title" className="form-input" placeholder="أدخل العنوان" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
             )}
 
             {needsDesc && (
               <div className="form-group">
                 <label className="form-label">الوصف</label>
-                <textarea className="form-input" placeholder="أدخل الوصف" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <textarea id="content-description" name="description" className="form-input" placeholder="أدخل الوصف" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
             )}
 
@@ -219,11 +219,11 @@ export default function ContentManagement() {
               <div className="grid-2">
                 <div className="form-group">
                   <label className="form-label">القيمة (مثال: 500+)</label>
-                  <input className="form-input" placeholder="500+" value={form.stat_value} onChange={(e) => setForm({ ...form, stat_value: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
+                  <input id="content-stat-value" name="stat_value" className="form-input" placeholder="500+" value={form.stat_value} onChange={(e) => setForm({ ...form, stat_value: e.target.value })} dir="ltr" style={{ textAlign: 'right' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">التسمية (مثال: طالبة حالية)</label>
-                  <input className="form-input" placeholder="طالبة حالية" value={form.stat_label} onChange={(e) => setForm({ ...form, stat_label: e.target.value })} />
+                  <input id="content-stat-label" name="stat_label" className="form-input" placeholder="طالبة حالية" value={form.stat_label} onChange={(e) => setForm({ ...form, stat_label: e.target.value })} />
                 </div>
               </div>
             )}
@@ -231,7 +231,7 @@ export default function ContentManagement() {
             {needsImage && (
               <div className="form-group">
                 <label className="form-label">الصورة</label>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                <input ref={fileRef} id="content-image-file" name="image_file" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
                 {form.image_url ? (
                   <div style={{ position: 'relative' }}>
                     <img src={form.image_url} alt="" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
@@ -254,7 +254,7 @@ export default function ContentManagement() {
                 )}
                 <div style={{ marginTop: '8px' }}>
                   <span className="form-hint">أو أدخل رابط الصورة مباشرة:</span>
-                  <input className="form-input" placeholder="https://..." value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} dir="ltr" style={{ marginTop: '4px' }} />
+                  <input id="content-image-url" name="image_url" className="form-input" placeholder="https://..." value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} dir="ltr" style={{ marginTop: '4px' }} />
                 </div>
               </div>
             )}

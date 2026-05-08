@@ -232,8 +232,8 @@ export default function CoordinatorApplications() {
           <table className="data-table">
             <thead style={{ background: 'var(--bg-tertiary)' }}>
               <tr>
-                <th style={{ padding: '16px 20px', width: '40px' }}>
-                  <input type="checkbox" checked={selectedIds.size === applications.length && applications.length > 0} onChange={toggleAll} />
+                  <th style={{ padding: '16px 20px', width: '40px' }}>
+                  <input type="checkbox" id="select-all-apps" name="select-all-apps" checked={selectedIds.size === applications.length && applications.length > 0} onChange={toggleAll} />
                 </th>
                 <th style={{ padding: '16px 20px' }}>الطالبة</th>
                 <th style={{ padding: '16px 20px' }}>الفرصة</th>
@@ -261,7 +261,7 @@ export default function CoordinatorApplications() {
                 return (
                   <tr key={app.id} style={{ background: selectedIds.has(app.id) ? 'var(--accent-primary-soft)' : 'transparent', cursor: 'pointer' }} onClick={() => setSelectedApp(app)}>
                     <td style={{ padding: '16px 20px' }}>
-                      <input type="checkbox" checked={selectedIds.has(app.id)} onChange={(e) => { e.stopPropagation(); toggleSelection(app.id); }} />
+                      <input type="checkbox" id={`select-app-${app.id}`} name="select-app" checked={selectedIds.has(app.id)} onChange={(e) => { e.stopPropagation(); toggleSelection(app.id); }} />
                     </td>
                     <td style={{ padding: '16px 20px' }}>
                       <div className="flex-gap">

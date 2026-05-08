@@ -282,7 +282,7 @@ export default function CoordinatorOpportunities() {
             <thead style={{ background: 'var(--bg-tertiary)' }}>
                 <tr>
                   <td style={{ padding: '16px 20px', width: '40px' }}>
-                    <input type="checkbox" checked={selectedIds.size === opportunities.length && opportunities.length > 0} onChange={toggleAll} />
+                    <input type="checkbox" id="select-all-opps" name="select-all-opps" checked={selectedIds.size === opportunities.length && opportunities.length > 0} onChange={toggleAll} />
                   </td>
                   <th style={{ padding: '16px 20px' }}>العنوان</th>
                   <th style={{ padding: '16px 20px' }}>الموقع</th>
@@ -309,7 +309,7 @@ export default function CoordinatorOpportunities() {
               ) : opportunities.map((opp) => (
                 <tr key={opp.id} style={{ background: selectedIds.has(opp.id) ? 'var(--accent-primary-soft)' : 'transparent', opacity: canModifyOpportunity(opp) ? 1 : 0.65 }}>
                   <td style={{ padding: '16px 20px' }}>
-                    <input type="checkbox" checked={selectedIds.has(opp.id)} onChange={() => toggleSelection(opp.id)} disabled={!canModifyOpportunity(opp)} />
+                    <input type="checkbox" id={`select-opp-${opp.id}`} name="select-opp" checked={selectedIds.has(opp.id)} onChange={() => toggleSelection(opp.id)} disabled={!canModifyOpportunity(opp)} />
                   </td>
                   <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-primary)' }}>{opp.title}</td>
                   <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{opp.location}</td>
