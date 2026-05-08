@@ -1,7 +1,6 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { encrypt, getLastThreeDigits } from '@/lib/encryption';
 
@@ -107,16 +106,6 @@ export async function POST(req: Request) {
         console.error('Error creating profile:', error);
         return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
       }
-
-      // Sync role and profile_completed to Clerk publicMetadata for instant client-side access
-      try {
-        const client = await clerkClient();
-        await client.users.updateUser(id, {
-          publicMetadata: { role: userRole, profileCompleted },
-        });
-      } catch (metaErr) {
-        console.error('Failed to update Clerk publicMetadata:', metaErr);
-      }
     } else if (evt.type === 'user.updated') {
       const { id, email_addresses, first_name, last_name, image_url } = evt.data;
       const email = email_addresses[0]?.email_address || '';
@@ -135,27 +124,6 @@ export async function POST(req: Request) {
       if (error) {
         console.error('Error updating profile:', error);
         return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
-      }
-
-      // Sync publicMetadata from Supabase (handles role changes made via admin panel)
-      try {
-        const { data: currentProfile } = await supabase
-          .from('profiles')
-          .select('role, profile_completed')
-          .eq('id', id)
-          .single();
-
-        if (currentProfile) {
-          const client = await clerkClient();
-          await client.users.updateUser(id, {
-            publicMetadata: {
-              role: currentProfile.role,
-              profileCompleted: currentProfile.profile_completed,
-            },
-          });
-        }
-      } catch (metaErr) {
-        console.error('Failed to sync Clerk publicMetadata:', metaErr);
       }
     } else if (evt.type === 'user.deleted') {
       // Clean up: applications, opportunities, notifications, and profile are handled
