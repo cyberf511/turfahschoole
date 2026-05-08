@@ -162,7 +162,7 @@ export default function CoordinatorApplications() {
     setIsBulkProcessing(false);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = applications.map(app => {
       const student = app.student as unknown as StudentInfo | undefined;
       const opp = app.opportunity as unknown as OppInfo | undefined;
@@ -174,7 +174,7 @@ export default function CoordinatorApplications() {
         'الحالة': APPLICATION_STATUS_LABELS[app.status]
       };
     });
-    exportToCSV(exportData, 'applications_export');
+    await exportToCSV(exportData, 'applications_export');
   };
 
   return (

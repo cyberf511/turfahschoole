@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { bulkPreRegisterStudents, getPreRegisteredStudents, updatePreRegisteredStudent, deletePreRegisteredStudent, bulkDeletePreRegisteredStudents, addPreRegisteredStudent } from '@/actions/students';
 import { PreRegisteredStudentSchema } from '@/lib/validations';
 import { Loading } from '@/components/ui/Loading';
@@ -55,12 +55,15 @@ export default function CoordinatorStudents() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const data = new Uint8Array(event.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
-        
+        const buffer = event.target?.result as ArrayBuffer;
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
+        const worksheet = workbook.worksheets[0];
+        const rows: any[][] = [];
+        worksheet.eachRow((row) => {
+          rows.push((row.values as any[]).slice(1));
+        });
+
         let startIndex = 0;
         if (rows[0] && typeof rows[0][0] === 'string' && (rows[0][0].includes('email') || rows[0][0].includes('البريد'))) startIndex = 1;
 
@@ -237,14 +240,25 @@ export default function CoordinatorStudents() {
     setIsBulkProcessing(false);
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
     const headers = ['البريد الإلكتروني', 'الاسم الرباعي', 'رقم الهوية', 'رقم الجوال', 'المرحلة الدراسية'];
     const sample = ['student@example.com', 'نورة محمد', '1122334455', '0500000000', 'first_secondary'];
     
-    const ws = XLSX.utils.aoa_to_sheet([headers, sample]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "الطالبات");
-    XLSX.writeFile(wb, "قالب_تسجيل_الطالبات.xlsx");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('الطالبات');
+    worksheet.addRow(headers);
+    worksheet.addRow(sample);
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'قالب_تسجيل_الطالبات.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) return <Loading />;

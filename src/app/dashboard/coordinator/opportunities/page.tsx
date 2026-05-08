@@ -182,7 +182,7 @@ export default function CoordinatorOpportunities() {
     setProcessingId(null);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = opportunities.map(o => ({
       'العنوان': o.title,
       'الوصف': o.description,
@@ -193,7 +193,7 @@ export default function CoordinatorOpportunities() {
       'تاريخ البداية': o.start_date ? formatDate(o.start_date) : '—',
       'تاريخ الإنشاء': formatDate(o.created_at)
     }));
-    exportToCSV(exportData, 'opportunities_export');
+    await exportToCSV(exportData, 'opportunities_export');
   };
 
   return (

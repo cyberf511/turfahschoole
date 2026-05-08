@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
+import * as QRCode from 'qrcode';
 
 export const metadata: Metadata = {
   title: 'شهادة إنجاز تطوعي | منصة التطوع',
@@ -30,6 +32,13 @@ export default async function CertificatePage({ params }: { params: { id: string
   if (!app) {
     notFound();
   }
+
+  // Build certificate URL and QR code
+  const headersList = await headers();
+  const host = headersList.get('host') || 'turfah.vercel.app';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const certificateUrl = `${protocol}://${host}/certificate/${params.id}`;
+  const qrDataUrl = await QRCode.toDataURL(certificateUrl, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } });
 
   const student = app.student as any;
   const opp = app.opportunity as any;
@@ -102,7 +111,7 @@ export default async function CertificatePage({ params }: { params: { id: string
           </div>
 
           {/* Footer details */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '600px', marginTop: 'auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', maxWidth: '600px', marginTop: 'auto', position: 'relative', zIndex: 1 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '8px' }}>تاريخ الإصدار</div>
               <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#111827', borderTop: '1px solid #d1d5db', paddingTop: '8px', width: '120px' }}>
@@ -115,6 +124,11 @@ export default async function CertificatePage({ params }: { params: { id: string
               <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#111827', borderTop: '1px solid #d1d5db', paddingTop: '8px', width: '150px', fontFamily: 'monospace' }}>
                 {app.id.split('-')[0].toUpperCase()}
               </div>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <img src={qrDataUrl} alt="QR" width="80" height="80" style={{ display: 'block', margin: '0 auto' }} />
+              <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px' }}>مسح للتحقق</div>
             </div>
           </div>
         </div>

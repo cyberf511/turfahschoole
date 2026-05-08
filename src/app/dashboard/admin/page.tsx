@@ -74,14 +74,14 @@ export default function AdminPage() {
     setDeletingId(null);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = users.map(u => ({
       'الاسم': u.full_name || '—',
       'البريد الإلكتروني': u.email,
       'الصلاحية': ROLE_LABELS[u.role],
       'تاريخ الانضمام': formatDate(u.created_at)
     }));
-    exportToCSV(exportData, 'users_export');
+    await exportToCSV(exportData, 'users_export');
   };
 
   const filtered = users.filter((u) =>

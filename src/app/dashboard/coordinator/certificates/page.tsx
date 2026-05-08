@@ -61,7 +61,7 @@ export default function CoordinatorCertificates() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = certs.map(cert => ({
       'الطالبة': cert.student?.full_name || '—',
       'البريد الإلكتروني': cert.student?.email || '—',
@@ -69,7 +69,7 @@ export default function CoordinatorCertificates() {
       'الساعات': cert.opportunity?.hours || 0,
       'تاريخ الرفع': cert.certificate_uploaded_at ? formatDate(cert.certificate_uploaded_at) : '—'
     }));
-    exportToCSV(exportData, 'certificates_review_export');
+    await exportToCSV(exportData, 'certificates_review_export');
   };
 
   return (
