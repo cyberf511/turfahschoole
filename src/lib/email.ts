@@ -46,12 +46,17 @@ export async function sendEmail({ to, subject, html }: EmailParams) {
   }
 }
 
+const LOGO_B64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDU5NjY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzEwYjk4MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgCiAgPCEtLSBPdXRlciBzaGllbGQgLS0+CiAgPHBhdGggZD0iTTYwIDYgTDExMCAzNCBMMTEwIDY2IFExMTAgMTAwIDYwIDExOCBRMTAgMTAwIDEwIDY2IEwxMCAzNCBaIiAKICAgICAgICBmaWxsPSJ1cmwoI2cpIiBzdHJva2U9IiMwNDc4NTciIHN0cm9rZS13aWR0aD0iMiIvPgogIAogIDwhLS0gSW5uZXIgc2hpZWxkIC0tPgogIDxwYXRoIGQ9Ik02MCAxNiBMOTggMzggTDk4IDY0IFE5OCA5MiA2MCAxMDggUTIyIDkyIDIyIDY0IEwyMiAzOCBaIiAKICAgICAgICBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPgogIAogIDwhLS0gT3BlbiBib29rIC0tPgogIDxwYXRoIGQ9Ik0zOCA1MCBRMzggNDIgNDggNDIgTDYwIDQ4IEw3MiA0MiBRODIgNDIgODIgNTAgTDgyIDc4IFE4MiA4NCA2MCA5MCBRMzggODQgMzggNzggWiIgCiAgICAgICAgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDU5NjY5IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik02MCA0OCBMNjAgOTAiIHN0cm9rZT0iIzA1OTY2OSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgCiAgPCEtLSBCb29rIHBhZ2VzIGxlZnQgLS0+CiAgPHBhdGggZD0iTTM4IDUwIFE0NCA1NiA2MCA1OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDU5NjY5IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgCiAgPCEtLSBTdGFyIGFib3ZlIGJvb2sgLS0+CiAgPHBvbHlnb24gcG9pbnRzPSI2MCwyOCA2MywzNiA3MiwzNiA2NSw0MiA2OCw1MCA2MCw0NSA1Miw1MCA1NSw0MiA0OCwzNiA1NywzNiIgCiAgICAgICAgICAgZmlsbD0iI2ZiYmYyNCIgc3Ryb2tlPSIjZjU5ZTBiIiBzdHJva2Utd2lkdGg9IjAuNSIvPgogIAogIDwhLS0gRGVjb3JhdGl2ZSBkb3RzIC0tPgogIDxjaXJjbGUgY3g9IjM4IiBjeT0iNzIiIHI9IjEuNSIgZmlsbD0iI2QxZDVkYiIvPgogIDxjaXJjbGUgY3g9IjgyIiBjeT0iNzIiIHI9IjEuNSIgZmlsbD0iI2QxZDVkYiIvPgogIDxjaXJjbGUgY3g9IjQyIiBjeT0iNjgiIHI9IjEuNSIgZmlsbD0iI2QxZDVkYiIvPgogIDxjaXJjbGUgY3g9Ijc4IiBjeT0iNjgiIHI9IjEuNSIgZmlsbD0iI2QxZDVkYiIvPgogIAogIDwhLS0gQm90dG9tIHRleHQgYXJjIGxpbmVzIC0tPgogIDxwYXRoIGQ9Ik0zMCA5MyBRNjAgMTAyIDkwIDkzIiBmaWxsPSJub25lIiBzdHJva2U9IiMwNTk2NjkiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMzQgOTcgUTYwIDEwNSA4NiA5NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDU5NjY5IiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K';
+
+const LOGO_HTML = `<div style="text-align:center;margin-bottom:16px;"><img src="${LOGO_B64}" alt="شعار المدرسة" width="60" height="60" style="display:inline-block;border:none;"></div>`;
+
 // Template: Application received
 export function emailApplicationReceived(studentName: string, oppTitle: string) {
   return {
     subject: `📩 تم استلام طلبك — ${escapeHtml(oppTitle)}`,
     html: `
       <div dir="rtl" style="font-family:'Cairo',sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+        ${LOGO_HTML}
         <div style="text-align:center;margin-bottom:20px;">
           <span style="font-size:2rem;">📩</span>
           <h2 style="color:#2563eb;margin:8px 0 4px;">تم استلام طلبك</h2>
@@ -77,6 +82,7 @@ export function emailApproved(studentName: string, oppTitle: string) {
     subject: `✅ تم قبول طلبك — ${escapeHtml(oppTitle)}`,
     html: `
       <div dir="rtl" style="font-family:'Cairo',sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+        ${LOGO_HTML}
         <div style="text-align:center;margin-bottom:20px;">
           <span style="font-size:2rem;">🎉</span>
           <h2 style="color:#059669;margin:8px 0 4px;">تم قبول طلبك!</h2>
@@ -102,6 +108,7 @@ export function emailRejected(studentName: string, oppTitle: string, reason?: st
     subject: `❌ تحديث على طلبك — ${escapeHtml(oppTitle)}`,
     html: `
       <div dir="rtl" style="font-family:'Cairo',sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+        ${LOGO_HTML}
         <div style="text-align:center;margin-bottom:20px;">
           <span style="font-size:2rem;">📋</span>
           <h2 style="color:#dc2626;margin:8px 0 4px;">تحديث على طلبك</h2>
@@ -128,6 +135,7 @@ export function emailCertificateVerified(studentName: string, oppTitle: string, 
     subject: `📜 تم اعتماد شهادتك — ${escapeHtml(oppTitle)}`,
     html: `
       <div dir="rtl" style="font-family:'Cairo',sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+        ${LOGO_HTML}
         <div style="text-align:center;margin-bottom:20px;">
           <span style="font-size:2rem;">🏆</span>
           <h2 style="color:#059669;margin:8px 0 4px;">تم اعتماد شهادتك!</h2>
