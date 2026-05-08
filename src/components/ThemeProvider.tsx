@@ -32,13 +32,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // Storage unavailable (Safari private, sandboxed iframe, etc.)
     }
-    try {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-    } catch {
-      // matchMedia unavailable
-    }
+    // Default to light for all first-time visitors regardless of system preference
+    document.documentElement.setAttribute('data-theme', 'light');
   }, []);
 
   const toggleTheme = () => {
