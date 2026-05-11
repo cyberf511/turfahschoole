@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { completeProfile } from '@/actions/profile';
-import { supabase } from '@/lib/supabase/client';
+import { createAuthedSupabase } from '@/lib/supabase/client';
 import type { EducationLevel } from '@/types';
 import { EDUCATION_LABELS } from '@/types';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
+  const { getToken } = useAuth();
   const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +26,10 @@ export default function OnboardingPage() {
     if (!isLoaded) return;
     if (!isSignedIn) { router.push('/sign-in'); return; }
     (async () => {
-      const { data: profile } = await supabase
+      const token = await getToken({ template: 'supabase' });
+      if (!token) { setChecking(false); return; }
+      const authedSupabase = createAuthedSupabase(token);
+      const { data: profile } = await authedSupabase
         .from('profiles')
         .select('role, profile_completed')
         .single();
@@ -36,7 +40,7 @@ export default function OnboardingPage() {
         setChecking(false);
       }
     })();
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, getToken, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
