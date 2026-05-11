@@ -3,10 +3,20 @@ import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await currentUser();
+  let user;
+  try {
+    user = await currentUser();
+  } catch {
+    redirect('/sign-in');
+  }
   if (!user) redirect('/sign-in');
 
-  const supabase = await createServerSupabase();
+  let supabase;
+  try {
+    supabase = await createServerSupabase();
+  } catch {
+    redirect('/sign-in');
+  }
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
