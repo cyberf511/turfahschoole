@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getPublishedContent, type SiteContent } from '@/actions/content';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { LandingClient } from '@/components/landing/LandingClient';
 import { LandingNav } from '@/components/landing/LandingNav';
 
@@ -24,6 +25,32 @@ const Icons = {
 
 export default async function LandingPage() {
   const { userId } = await auth();
+
+  let dashboardHref = '/dashboard';
+  if (userId) {
+    try {
+      const user = await currentUser();
+      const supabase = await createServerSupabase();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, profile_completed')
+        .eq('id', user?.id)
+        .single();
+      if (profile) {
+        const allowedAdmins = (process.env.ADMIN_USERNAMES || 'superadmin,admin').split(',').map(s => s.trim().toLowerCase());
+        const isAdmin = allowedAdmins.includes(user?.username?.toLowerCase() || '');
+        if (isAdmin || profile.role === 'super_admin') {
+          dashboardHref = '/dashboard/admin';
+        } else if (!profile.profile_completed) {
+          dashboardHref = '/onboarding';
+        } else if (profile.role === 'coordinator') {
+          dashboardHref = '/dashboard/coordinator';
+        } else {
+          dashboardHref = '/dashboard/student';
+        }
+      }
+    } catch {}
+  }
 
   const contentRes = await getPublishedContent();
   const content = contentRes.data || [];
@@ -54,7 +81,7 @@ export default async function LandingPage() {
           </p>
           <div className="landing-hero__actions">
             {userId ? (
-              <Link href="/dashboard" className="btn btn--primary btn--lg" id="hero-signin">
+              <Link href={dashboardHref} className="btn btn--primary btn--lg" id="hero-signin">
                 <Icons.login /> العودة للوحة التحكم
               </Link>
             ) : (
@@ -181,7 +208,7 @@ export default async function LandingPage() {
           <p className="landing-cta__desc">سجّل دخولك وانضم لمئات الطالبات في برنامج التطوع</p>
           <div className="landing-hero__actions">
             {userId ? (
-              <Link href="/dashboard" className="btn btn--primary btn--lg">
+              <Link href={dashboardHref} className="btn btn--primary btn--lg">
                 العودة للوحة التحكم
               </Link>
             ) : (
