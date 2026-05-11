@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { completeProfile } from '@/actions/profile';
+import { supabase } from '@/lib/supabase/client';
 import type { EducationLevel } from '@/types';
 import { EDUCATION_LABELS } from '@/types';
 
@@ -40,7 +41,12 @@ export default function OnboardingPage() {
     });
 
     if (result.success) {
-      router.push('/dashboard');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .single();
+      const role = profile?.role || 'student';
+      router.push(role === 'coordinator' ? '/dashboard/coordinator' : role === 'super_admin' ? '/dashboard/admin' : '/dashboard/student');
     } else {
       setError(result.error || 'حدث خطأ');
       setLoading(false);
