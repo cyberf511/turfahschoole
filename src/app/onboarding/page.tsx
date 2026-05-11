@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { completeProfile } from '@/actions/profile';
 import { supabase } from '@/lib/supabase/client';
 import type { EducationLevel } from '@/types';
@@ -9,6 +10,8 @@ import { EDUCATION_LABELS } from '@/types';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useUser();
+  const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -17,6 +20,23 @@ export default function OnboardingPage() {
     education_level: '' as EducationLevel | '',
     phone: '',
   });
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) { router.push('/sign-in'); return; }
+    (async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, profile_completed')
+        .single();
+      if (profile?.profile_completed) {
+        const role = profile.role;
+        router.push(role === 'coordinator' ? '/dashboard/coordinator' : role === 'super_admin' ? '/dashboard/admin' : '/dashboard/student');
+      } else {
+        setChecking(false);
+      }
+    })();
+  }, [isLoaded, isSignedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +61,7 @@ export default function OnboardingPage() {
     });
 
     if (result.success) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .single();
-      const role = profile?.role || 'student';
-      router.push(role === 'coordinator' ? '/dashboard/coordinator' : role === 'super_admin' ? '/dashboard/admin' : '/dashboard/student');
+      router.push('/dashboard/student');
     } else {
       setError(result.error || 'حدث خطأ');
       setLoading(false);
@@ -60,6 +75,8 @@ export default function OnboardingPage() {
     !!formData.phone,
   ];
   const filledCount = filledSteps.filter(Boolean).length;
+
+  if (checking) return <div className="onboarding-page"><div className="onboarding-card card card--glass animate-scale-in" style={{ textAlign: 'center', padding: '60px 24px' }}>جاري التحقق من البيانات...</div></div>;
 
   return (
     <div className="onboarding-page">
