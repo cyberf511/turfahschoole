@@ -1,7 +1,9 @@
 'use server';
 
+import crypto from 'crypto';
 import { currentUser } from '@clerk/nextjs/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import { encrypt, getLastThreeDigits } from '@/lib/encryption';
 import { ProfileSchema, ProfileUpdateSchema } from '@/lib/validations';
 import type { ActionResponse, ProfileFormData, Profile } from '@/types';
@@ -73,6 +75,28 @@ export async function completeProfile(formData: ProfileFormData): Promise<Action
     .eq('id', user.id);
 
   if (error) return { success: false, error: 'فشل في حفظ البيانات' };
+
+  const email = user.emailAddresses?.[0]?.emailAddress;
+  if (email) {
+    const adminSupabase = createAdminSupabase();
+    const nationalIdHash = crypto.createHash('sha256').update(validData.national_id.trim()).digest('hex');
+    const { data: existing } = await adminSupabase
+      .from('pre_registered_students')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+    if (!existing) {
+      await adminSupabase.from('pre_registered_students').insert({
+        email: email.toLowerCase().trim(),
+        full_name: validData.full_name,
+        national_id_encrypted: encrypt(validData.national_id.trim()),
+        national_id_last3: getLastThreeDigits(validData.national_id.trim()),
+        national_id_hash: nationalIdHash,
+        phone: validData.phone || null,
+        education_level: validData.education_level || 'first_secondary',
+      });
+    }
+  }
 
   await supabase.from('audit_logs').insert({
     admin_id: user.id,
