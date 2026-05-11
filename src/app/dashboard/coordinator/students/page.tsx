@@ -9,6 +9,7 @@ import { Loading } from '@/components/ui/Loading';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import type { PreRegisteredStudent } from '@/actions/students';
+import { EDUCATION_LABELS } from '@/types';
 
 const Icons = {
   trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
@@ -32,6 +33,7 @@ export default function CoordinatorStudents() {
     phone: '',
     education_level: 'first_secondary'
   });
+  const [viewingStudent, setViewingStudent] = useState<PreRegisteredStudent | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -325,6 +327,7 @@ export default function CoordinatorStudents() {
                   <th style={{ width: '40px', textAlign: 'center', padding: '16px 20px' }}>#</th>
                   <th style={{ padding: '16px 20px' }}>البريد الإلكتروني</th>
                   <th style={{ padding: '16px 20px' }}>الاسم الكامل</th>
+                  <th style={{ padding: '16px 20px' }}>المرحلة</th>
                   <th style={{ padding: '16px 20px' }}>الجوال</th>
                   <th style={{ padding: '16px 20px' }}>الهوية</th>
                   <th style={{ padding: '16px 20px', textAlign: 'center' }}>الإجراءات</th>
@@ -341,12 +344,15 @@ export default function CoordinatorStudents() {
                       <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.email}</span>
                     </td>
                     <td style={{ padding: '16px 20px' }}>
-                      <div className="flex-gap">
+                      <div className="flex-gap" style={{ cursor: 'pointer' }} onClick={() => setViewingStudent(student)}>
                         <div className="avatar avatar--sm" style={{ background: 'var(--accent-primary-soft)', color: 'var(--accent-primary)' }}>
                           {student.full_name?.[0] || '؟'}
                         </div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{student.full_name}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--accent-primary)', textDecoration: 'underline', textDecorationColor: 'var(--border)' }}>{student.full_name}</div>
                       </div>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '16px 20px' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{EDUCATION_LABELS[student.education_level as keyof typeof EDUCATION_LABELS] || student.education_level || '—'}</span>
                     </td>
                     <td style={{ textAlign: 'right', padding: '16px 20px' }}>
                       <span dir="ltr" style={{ display: 'inline-block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{student.phone || '—'}</span>
@@ -575,6 +581,20 @@ export default function CoordinatorStudents() {
                     required
                   />
                 </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-education-level">المرحلة الدراسية</label>
+                  <select
+                    id="edit-education-level"
+                    name="education_level"
+                    className="form-input"
+                    value={editingStudent.education_level || 'first_secondary'}
+                    onChange={e => setEditingStudent({ ...editingStudent, education_level: e.target.value })}
+                  >
+                    {Object.entries(EDUCATION_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="modal__footer" style={{ marginTop: '24px' }}>
                   <button type="button" className="btn btn--secondary" onClick={() => setEditingStudent(null)} disabled={isSubmitting}>
                     إلغاء
@@ -584,6 +604,40 @@ export default function CoordinatorStudents() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Detail Modal */}
+      {viewingStudent && (
+        <div className="modal-overlay animate-fade-in" onClick={() => setViewingStudent(null)}>
+          <div className="modal card animate-scale-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="modal__header">
+              <h3 className="modal__title">بيانات الطالبة</h3>
+              <button className="modal__close" onClick={() => setViewingStudent(null)}>×</button>
+            </div>
+            <div className="modal__content" style={{ padding: '0 24px 24px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div className="avatar" style={{ width: 72, height: 72, fontSize: '1.8rem', background: 'var(--accent-primary-soft)', color: 'var(--accent-primary)', margin: '0 auto 12px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {viewingStudent.full_name?.[0] || '?'}
+                </div>
+                <h2 style={{ margin: '0 0 4px', fontSize: '1.3rem', color: 'var(--text-primary)' }}>{viewingStudent.full_name}</h2>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[
+                  { label: 'البريد الإلكتروني', value: viewingStudent.email, dir: 'ltr' },
+                  { label: 'رقم الجوال', value: viewingStudent.phone || '—', dir: 'ltr' },
+                  { label: 'رقم الهوية', value: viewingStudent.national_id || '—', dir: 'ltr' },
+                  { label: 'المرحلة الدراسية', value: EDUCATION_LABELS[viewingStudent.education_level as keyof typeof EDUCATION_LABELS] || viewingStudent.education_level || '—' },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--bg-tertiary)', borderRadius: '10px' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{item.label}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem', textAlign: 'left' }} dir={item.dir}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
