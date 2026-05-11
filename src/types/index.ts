@@ -11,12 +11,9 @@ export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 export type CompletionStatus = 'completed_under_review' | 'verified';
 
 export type EducationLevel =
-  | 'middle_school'
-  | 'high_school'
-  | 'diploma'
-  | 'bachelors'
-  | 'masters'
-  | 'phd';
+  | 'first_secondary'
+  | 'second_secondary'
+  | 'third_secondary';
 
 export type NotificationType =
   | 'application_submitted'
@@ -146,12 +143,9 @@ export interface PaginatedResponse<T> extends ActionResponse<T> {
 // --- Education Level Labels ---
 
 export const EDUCATION_LABELS: Record<EducationLevel, string> = {
-  middle_school: 'متوسط',
-  high_school: 'ثانوي',
-  diploma: 'دبلوم',
-  bachelors: 'بكالوريوس',
-  masters: 'ماجستير',
-  phd: 'دكتوراه',
+  first_secondary: 'أول ثانوي',
+  second_secondary: 'ثاني ثانوي',
+  third_secondary: 'ثالث ثانوي',
 };
 
 // --- Status Labels ---
